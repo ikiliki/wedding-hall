@@ -21,7 +21,7 @@ export default async function LoginPage() {
         </p>
         <h1 className="font-serif text-3xl">Welcome.</h1>
         <p className="mt-3 text-sm text-muted">
-          Enter your email. We&apos;ll send you a sign-in link.
+          Sign in with your email and password.
         </p>
         <div className="mt-10">
           <EmailLoginForm />

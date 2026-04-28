@@ -1,6 +1,6 @@
 # Wedding Hall
 
-Minimal, black-and-white wedding-budget MVP. A user signs in with an emailed magic link, walks through a short onboarding wizard, and lands on a dashboard with their venue budget estimate.
+Minimal, black-and-white wedding-budget MVP. A user signs in with email + password (pre-filled demo creds for now), walks through a short onboarding wizard, and lands on a dashboard with their venue budget estimate.
 
 Stack: **Next.js 15 (App Router)** + **TypeScript** + **Tailwind CSS** + **Supabase Auth + Postgres** + **Vercel**.
 
@@ -29,13 +29,13 @@ App runs on <http://localhost:3000>.
 2. Go to **Project Settings -> API** and copy:
    - `Project URL` -> `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` API key -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. **Authentication -> Providers**: leave the **Email** provider on (default). No other provider configuration is required for Phase 1.
+3. **Authentication -> Providers -> Email**: leave enabled (default). For the MVP demo flow with `test@gmail.com` / `test1234`, **turn OFF "Confirm email"** under that provider's settings — otherwise Supabase will block the auto-signup until the user clicks a confirmation link in an inbox we don't control.
 4. Go to **Authentication -> URL Configuration** and add to **Redirect URLs**:
    ```
    http://localhost:3000/auth/callback
    https://<your-vercel-domain>/auth/callback
    ```
-   Set **Site URL** to your production domain (or `http://localhost:3000` while developing). The magic-link email always points back to one of these URLs.
+   Set **Site URL** to your production domain (or `http://localhost:3000` while developing).
 
 ### Run the schema
 
