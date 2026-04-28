@@ -1,7 +1,22 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/Button";
 
-export default function LandingPage() {
+type SearchParams = Promise<{ code?: string }>;
+
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { code } = await searchParams;
+
+  // Defensive redirect: if Supabase ever sends a magic-link / confirmation
+  // email back to "/", forward it to the real auth-exchange route.
+  if (code) {
+    redirect(`/auth/callback?code=${encodeURIComponent(code)}`);
+  }
+
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <p className="mb-6 text-xs uppercase tracking-luxe text-muted">

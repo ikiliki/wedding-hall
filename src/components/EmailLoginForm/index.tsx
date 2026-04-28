@@ -44,6 +44,11 @@ export function EmailLoginForm() {
       const { error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
+        options: {
+          // Use the current origin so dev hits localhost and prod hits the
+          // real domain. Supabase falls back to "Site URL" if this is omitted.
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
       if (signUpError) {
         setLoading(false);
