@@ -86,6 +86,13 @@ create table if not exists public.wedding_budgets (
   updated_at timestamptz not null default now()
 );
 
+-- One budget per user. Allows onboarding to be re-run as an "edit"
+-- via upsert(on_conflict=user_id), and prevents duplicate-row drift.
+alter table public.wedding_budgets
+  drop constraint if exists wedding_budgets_user_id_key;
+alter table public.wedding_budgets
+  add constraint wedding_budgets_user_id_key unique (user_id);
+
 create index if not exists wedding_budgets_user_id_idx
   on public.wedding_budgets(user_id);
 

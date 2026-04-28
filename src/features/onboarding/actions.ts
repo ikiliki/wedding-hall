@@ -35,24 +35,27 @@ export async function saveBudget(input: SaveBudgetInput) {
   const guestCount = Math.max(0, Math.floor(input.guestCount));
   const estimatedTotal = guestCount * pricePerGuest;
 
-  const { error } = await supabase.from("wedding_budgets").insert({
-    user_id: user.id,
-    couple_name_1: input.coupleName1.trim(),
-    couple_name_2: input.coupleName2.trim(),
-    preferred_day: input.preferredDay.trim() || null,
-    guest_count: guestCount,
-    wedding_type: input.weddingType,
-    venue_price_type: input.venuePriceType,
-    venue_price_per_guest: pricePerGuest,
-    venue_name:
-      input.venuePriceType === "custom" && input.venueName?.trim()
-        ? input.venueName.trim()
-        : null,
-    estimated_total: estimatedTotal,
-  });
+  const { error } = await supabase.from("wedding_budgets").upsert(
+    {
+      user_id: user.id,
+      couple_name_1: input.coupleName1.trim(),
+      couple_name_2: input.coupleName2.trim(),
+      preferred_day: input.preferredDay.trim() || null,
+      guest_count: guestCount,
+      wedding_type: input.weddingType,
+      venue_price_type: input.venuePriceType,
+      venue_price_per_guest: pricePerGuest,
+      venue_name:
+        input.venuePriceType === "custom" && input.venueName?.trim()
+          ? input.venueName.trim()
+          : null,
+      estimated_total: estimatedTotal,
+    },
+    { onConflict: "user_id" },
+  );
 
   if (error) {
-    console.error("saveBudget insert error", error);
+    console.error("saveBudget upsert error", error);
     throw new Error("Could not save budget. Please try again.");
   }
 
