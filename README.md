@@ -41,6 +41,10 @@ App runs on <http://localhost:3000>.
 
 Open **SQL Editor** in Supabase and run the entire contents of [`supabase/schema.sql`](./supabase/schema.sql). This creates the `profiles` and `wedding_budgets` tables and the row-level security policies. It is idempotent and safe to re-run.
 
+### Seed the demo test user (optional, for the pre-filled login)
+
+After `schema.sql`, open the SQL Editor again and paste the contents of [`supabase/seed.sql`](./supabase/seed.sql). It inserts a pre-confirmed user `test@gmail.com` / `test1234` straight into `auth.users`, the matching `auth.identities` row, and a `profiles` row, so the pre-filled login form on `/login` signs in immediately. Idempotent: re-running it is a no-op once the user exists.
+
 ---
 
 ## 3. Environment variables
