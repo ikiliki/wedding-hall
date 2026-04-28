@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { EmailLoginForm } from "@/components/EmailLoginForm";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function LoginPage() {
@@ -21,10 +21,10 @@ export default async function LoginPage() {
         </p>
         <h1 className="font-serif text-3xl">Welcome.</h1>
         <p className="mt-3 text-sm text-muted">
-          Sign in with Google to continue.
+          Enter your email. We&apos;ll send you a sign-in link.
         </p>
         <div className="mt-10">
-          <GoogleSignInButton />
+          <EmailLoginForm />
         </div>
         <p className="mt-8 text-xs text-muted">
           <Link href="/" className="underline-offset-4 hover:underline">

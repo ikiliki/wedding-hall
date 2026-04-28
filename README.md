@@ -1,6 +1,6 @@
 # Wedding Hall
 
-Minimal, black-and-white wedding-budget MVP. A user signs in with Google, walks through a short onboarding wizard, and lands on a dashboard with their venue budget estimate.
+Minimal, black-and-white wedding-budget MVP. A user signs in with an emailed magic link, walks through a short onboarding wizard, and lands on a dashboard with their venue budget estimate.
 
 Stack: **Next.js 15 (App Router)** + **TypeScript** + **Tailwind CSS** + **Supabase Auth + Postgres** + **Vercel**.
 
@@ -29,16 +29,13 @@ App runs on <http://localhost:3000>.
 2. Go to **Project Settings -> API** and copy:
    - `Project URL` -> `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` API key -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Go to **Authentication -> Providers -> Google** and enable it. You will need a Google OAuth client (Client ID + Client Secret) from <https://console.cloud.google.com>. In Google Cloud, set the **Authorized redirect URI** to:
-   ```
-   https://<your-supabase-project>.supabase.co/auth/v1/callback
-   ```
+3. **Authentication -> Providers**: leave the **Email** provider on (default). No other provider configuration is required for Phase 1.
 4. Go to **Authentication -> URL Configuration** and add to **Redirect URLs**:
    ```
    http://localhost:3000/auth/callback
    https://<your-vercel-domain>/auth/callback
    ```
-   Set **Site URL** to your production domain (or `http://localhost:3000` while developing).
+   Set **Site URL** to your production domain (or `http://localhost:3000` while developing). The magic-link email always points back to one of these URLs.
 
 ### Run the schema
 

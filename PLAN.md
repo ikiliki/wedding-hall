@@ -5,7 +5,7 @@ This plan governs what is in scope. New work must reference this file.
 ## Phase 1 (current scope)
 
 - Landing page
-- Google SSO login
+- Email magic-link login (Supabase)
 - Auth callback
 - User profile creation/loading
 - Wedding onboarding flow:
