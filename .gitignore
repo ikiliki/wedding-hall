@@ -38,6 +38,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# supabase cli artifacts
+supabase/.temp
+supabase/.branches
+
 # IDE
 .idea
 .vscode
