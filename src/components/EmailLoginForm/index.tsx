@@ -11,16 +11,54 @@ import * as styles from "./EmailLoginForm.styles";
 const DEFAULT_EMAIL = "test@gmail.com";
 const DEFAULT_PASSWORD = "test1234";
 
+type Mode = "signin" | "signup";
+
 export function EmailLoginForm() {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState(DEFAULT_EMAIL);
   const [password, setPassword] = useState(DEFAULT_PASSWORD);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+
+  function switchMode(next: Mode) {
+    if (next === mode) return;
+    setMode(next);
+    setErrorMsg(null);
+    setInfo(null);
+    if (next === "signup") {
+      setEmail("");
+      setPassword("");
+    } else {
+      setEmail(DEFAULT_EMAIL);
+      setPassword(DEFAULT_PASSWORD);
+    }
+  }
+
+  async function upsertProfile() {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("profiles").upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        full_name:
+          (user.user_metadata?.full_name as string | undefined) ??
+          (user.user_metadata?.name as string | undefined) ??
+          null,
+      },
+      { onConflict: "id" },
+    );
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorMsg(null);
+    setInfo(null);
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !/.+@.+\..+/.test(trimmedEmail)) {
@@ -35,62 +73,92 @@ export function EmailLoginForm() {
     setLoading(true);
     const supabase = createClient();
 
-    let { error } = await supabase.auth.signInWithPassword({
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        setLoading(false);
+        setErrorMsg(error.message);
+        return;
+      }
+
+      if (!data.session) {
+        setLoading(false);
+        setInfo(
+          `Account created. Supabase requires email confirmation - check the inbox for ${trimmedEmail}, then come back and sign in. (To skip: turn off "Confirm email" in Supabase Auth -> Providers -> Email.)`,
+        );
+        return;
+      }
+
+      await upsertProfile();
+      setLoading(false);
+      router.push("/onboarding");
+      router.refresh();
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
       email: trimmedEmail,
       password,
     });
 
-    if (error && /invalid login credentials/i.test(error.message)) {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          // Use the current origin so dev hits localhost and prod hits the
-          // real domain. Supabase falls back to "Site URL" if this is omitted.
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (signUpError) {
-        setLoading(false);
-        setErrorMsg(signUpError.message);
-        return;
-      }
-      ({ error } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password,
-      }));
-    }
-
     if (error) {
       setLoading(false);
+      if (/email not confirmed/i.test(error.message)) {
+        setErrorMsg(
+          "This account exists but its email is not confirmed. Confirm it from the inbox, or run supabase/seed.sql to seed a pre-confirmed demo user.",
+        );
+        return;
+      }
+      if (/invalid login credentials/i.test(error.message)) {
+        setErrorMsg(
+          'No account found, or wrong password. Tap "Sign up" to create one.',
+        );
+        return;
+      }
       setErrorMsg(error.message);
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      await supabase.from("profiles").upsert(
-        {
-          id: user.id,
-          email: user.email ?? null,
-          full_name:
-            (user.user_metadata?.full_name as string | undefined) ??
-            (user.user_metadata?.name as string | undefined) ??
-            null,
-        },
-        { onConflict: "id" },
-      );
-    }
-
+    await upsertProfile();
+    setLoading(false);
     router.push("/onboarding");
     router.refresh();
   }
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
+      <div className={styles.tabs} role="tablist" aria-label="Sign in or sign up">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "signin"}
+          className={`${styles.tab} ${
+            mode === "signin" ? styles.tabActive : styles.tabInactive
+          }`}
+          onClick={() => switchMode("signin")}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "signup"}
+          className={`${styles.tab} ${
+            mode === "signup" ? styles.tabActive : styles.tabInactive
+          }`}
+          onClick={() => switchMode("signup")}
+        >
+          Sign up
+        </button>
+      </div>
+
       <div className={styles.field}>
         <label htmlFor="email" className={styles.label}>
           Email
@@ -116,19 +184,31 @@ export function EmailLoginForm() {
         <input
           id="password"
           type="password"
-          autoComplete="current-password"
+          autoComplete={
+            mode === "signup" ? "new-password" : "current-password"
+          }
           className={styles.input}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
           required
           disabled={loading}
+          minLength={6}
         />
+        {mode === "signup" && (
+          <p className={styles.helper}>At least 6 characters.</p>
+        )}
       </div>
 
       {errorMsg && (
         <p className={styles.error} role="alert">
           {errorMsg}
+        </p>
+      )}
+
+      {info && (
+        <p className={styles.success} role="status">
+          {info}
         </p>
       )}
 
@@ -138,7 +218,13 @@ export function EmailLoginForm() {
         fullWidth
         disabled={loading || email.trim().length === 0 || password.length === 0}
       >
-        {loading ? "Signing in..." : "Sign in"}
+        {loading
+          ? mode === "signup"
+            ? "Creating..."
+            : "Signing in..."
+          : mode === "signup"
+            ? "Create account"
+            : "Sign in"}
       </Button>
     </form>
   );
