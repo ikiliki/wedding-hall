@@ -36,13 +36,13 @@ export function EmailLoginForm() {
     }
   }
 
-  async function upsertProfile() {
+  async function upsertProfile(): Promise<{ tablesMissing: boolean }> {
     const supabase = createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from("profiles").upsert(
+    if (!user) return { tablesMissing: false };
+    const { error } = await supabase.from("profiles").upsert(
       {
         id: user.id,
         email: user.email ?? null,
@@ -53,6 +53,14 @@ export function EmailLoginForm() {
       },
       { onConflict: "id" },
     );
+    if (
+      error &&
+      (error.code === "42P01" ||
+        /relation .* does not exist/i.test(error.message))
+    ) {
+      return { tablesMissing: true };
+    }
+    return { tablesMissing: false };
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -84,6 +92,18 @@ export function EmailLoginForm() {
 
       if (error) {
         setLoading(false);
+        if (/email rate limit/i.test(error.message)) {
+          setErrorMsg(
+            'Email rate limit hit. Turn OFF "Confirm email" in Supabase -> Authentication -> Providers -> Email, then try again. (No emails will be sent and signup is instant.)',
+          );
+          return;
+        }
+        if (/already registered|user already exists/i.test(error.message)) {
+          setErrorMsg(
+            'That email already has an account. Switch to "Sign in".',
+          );
+          return;
+        }
         setErrorMsg(error.message);
         return;
       }
@@ -91,13 +111,19 @@ export function EmailLoginForm() {
       if (!data.session) {
         setLoading(false);
         setInfo(
-          `Account created. Supabase requires email confirmation - check the inbox for ${trimmedEmail}, then come back and sign in. (To skip: turn off "Confirm email" in Supabase Auth -> Providers -> Email.)`,
+          `Account created. Supabase requires email confirmation - check the inbox for ${trimmedEmail}, then come back and sign in. (To skip: turn OFF "Confirm email" in Supabase Auth -> Providers -> Email.)`,
         );
         return;
       }
 
-      await upsertProfile();
+      const { tablesMissing } = await upsertProfile();
       setLoading(false);
+      if (tablesMissing) {
+        setErrorMsg(
+          "Signed up, but the database tables are missing. Open Supabase -> SQL Editor and run supabase/seed.sql once, then click Sign in.",
+        );
+        return;
+      }
       router.push("/onboarding");
       router.refresh();
       return;
@@ -118,7 +144,7 @@ export function EmailLoginForm() {
       }
       if (/invalid login credentials/i.test(error.message)) {
         setErrorMsg(
-          'No account found, or wrong password. Tap "Sign up" to create one.',
+          'No account found, or wrong password. For the demo user, run supabase/seed.sql in Supabase. Or tap "Sign up" to create a new account.',
         );
         return;
       }
@@ -126,8 +152,14 @@ export function EmailLoginForm() {
       return;
     }
 
-    await upsertProfile();
+    const { tablesMissing } = await upsertProfile();
     setLoading(false);
+    if (tablesMissing) {
+      setErrorMsg(
+        "Signed in, but the database tables are missing. Open Supabase -> SQL Editor and run supabase/seed.sql once, then refresh.",
+      );
+      return;
+    }
     router.push("/onboarding");
     router.refresh();
   }

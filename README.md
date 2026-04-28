@@ -37,13 +37,19 @@ App runs on <http://localhost:3000>.
    ```
    Set **Site URL** to your production domain (or `http://localhost:3000` while developing).
 
-### Run the schema
+### Run the database setup (one file)
 
-Open **SQL Editor** in Supabase and run the entire contents of [`supabase/schema.sql`](./supabase/schema.sql). This creates the `profiles` and `wedding_budgets` tables and the row-level security policies. It is idempotent and safe to re-run.
+Open **SQL Editor** in Supabase, paste the entire contents of [`supabase/seed.sql`](./supabase/seed.sql), and click **Run**.
 
-### Seed the demo test user (optional, for the pre-filled login)
+That single file:
+1. Creates the `profiles` and `wedding_budgets` tables and their row-level security policies.
+2. Inserts a pre-confirmed demo user `test@gmail.com` / `test1234` straight into `auth.users` (so the pre-filled login form on `/login` signs in immediately, no email needed).
 
-After `schema.sql`, open the SQL Editor again and paste the contents of [`supabase/seed.sql`](./supabase/seed.sql). It inserts a pre-confirmed user `test@gmail.com` / `test1234` straight into `auth.users`, the matching `auth.identities` row, and a `profiles` row, so the pre-filled login form on `/login` signs in immediately. Idempotent: re-running it is a no-op once the user exists.
+It's idempotent — safe to re-run any time. Schema-only callers can still use [`supabase/schema.sql`](./supabase/schema.sql).
+
+### Disable email confirmation for the demo flow
+
+Authentication -> **Providers -> Email** -> turn OFF **Confirm email** -> Save. Otherwise Supabase rate-limits signups (`email rate limit exceeded`) since the free tier sends only ~2 confirmation emails per hour.
 
 ---
 
