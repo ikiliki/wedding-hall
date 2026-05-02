@@ -1,0 +1,156 @@
+# Wedding Hall — local development stack.
+#
+# Brings up the entire app on your machine:
+#   db       Postgres + Supabase roles
+#   auth     gotrue (Supabase Auth)
+#   rest     postgrest (Supabase data API)
+#   gateway  nginx routing /auth/v1 + /rest/v1 onto port 54321
+#   seed     one-shot loader for supabase/seed.sql (creates demo user)
+#   client   Vite dev server on http://localhost:5173
+#   server   Next.js dev server on http://localhost:3001
+#
+# Bring it up:
+#   docker compose up -d --build
+#
+# All secrets here are LOCAL DEV ONLY. The JWT secret + anon/service keys
+# are the well-known Supabase demo values, signed with the secret below.
+# DO NOT REUSE IN PRODUCTION.
+
+name: wedding-hall
+
+# JWT secret + matching anon/service keys are baked in below.
+# These are LOCAL DEV ONLY. Do not reuse outside this docker stack.
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: wh-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "54322:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  auth:
+    image: supabase/gotrue:v2.158.1
+    container_name: wh-auth
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: "9999"
+      API_EXTERNAL_URL: http://localhost:54321
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:postgres@db:5432/postgres?search_path=auth
+      GOTRUE_SITE_URL: http://localhost:5173
+      GOTRUE_URI_ALLOW_LIST: http://localhost:5173,http://localhost:5173/auth/callback,http://localhost:3001
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: "3600"
+      GOTRUE_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-long
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@example.com
+      GOTRUE_SMTP_HOST: ""
+      GOTRUE_SMTP_PORT: "0"
+      GOTRUE_SMTP_USER: ""
+      GOTRUE_SMTP_PASS: ""
+      GOTRUE_SMTP_SENDER_NAME: Wedding Hall (local)
+      GOTRUE_LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9999/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: wh-rest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:postgres@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: wh-gateway
+    restart: unless-stopped
+    depends_on:
+      - auth
+      - rest
+    ports:
+      - "54321:8000"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  seed:
+    image: postgres:15-alpine
+    container_name: wh-seed
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./supabase/seed.sql:/seed.sql:ro
+    entrypoint:
+      - sh
+      - -c
+      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && echo '✓ Wedding Hall seeded'"
+    restart: "no"
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: wh-client
+    restart: unless-stopped
+    depends_on:
+      - gateway
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_SUPABASE_URL: http://localhost:54321
+      VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6IndlZGRpbmctaGFsbC1sb2NhbCIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxNzk5NTM1NjAwfQ.JxejbUaxXmfGDcu7-FsaoReqSHXWG1CRnKUwq06VX3o
+    volumes:
+      - ./client:/app
+      - client_node_modules:/app/node_modules
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: wh-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./server:/app
+      - server_node_modules:/app/node_modules
+
+volumes:
+  db_data:
+  client_node_modules:
+  server_node_modules:
+
