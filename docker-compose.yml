@@ -114,14 +114,16 @@ services:
       PGPASSWORD: postgres
     volumes:
       - ./supabase/seed.sql:/seed.sql:ro
-    # Run the seed AND ping PostgREST to refresh its schema cache. PostgREST
-    # boots before the tables exist, so without this NOTIFY the first PUT
-    # to /api/budget returns "404 / empty body" until you manually restart
-    # the rest container.
+      - ./supabase/fix-prod-and-seed-demo-user.sql:/demo.sql:ro
+    # Apply seed (schema + test@gmail.com) AND the demo seed (mock-budget
+    # demo@weddinghall.app + omri repair), then NOTIFY PostgREST to refresh
+    # its schema cache. PostgREST boots before the tables exist, so without
+    # this NOTIFY the first PUT to /api/budget returns "404 / empty body"
+    # until you manually restart the rest container.
     entrypoint:
       - sh
       - -c
-      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && psql -h db -U postgres -d postgres -c \"NOTIFY pgrst, 'reload schema';\" && echo '✓ Wedding Hall seeded'"
+      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /demo.sql && psql -h db -U postgres -d postgres -c \"NOTIFY pgrst, 'reload schema';\" && echo '✓ Wedding Hall seeded'"
     restart: "no"
 
   client:
