@@ -57,17 +57,46 @@ export async function PUT(request: Request) {
     );
   }
 
-  const { data, error } = await auth.supabase
+  // Backwards compat with prod DBs that pre-date the Phase 2 columns
+  // (`guest_count_min`, `guest_count_max`, `selections`). PostgREST replies
+  // PGRST204 ("Could not find the X column ... in the schema cache") when
+  // we send a column it doesn't know about. Strip empty Phase 2 fields,
+  // and if PGRST204 still fires, retry without them entirely so the
+  // legacy onboarding always succeeds.
+  const PHASE_2_KEYS = ["guest_count_min", "guest_count_max", "selections"] as const;
+  type Phase2Key = (typeof PHASE_2_KEYS)[number];
+
+  const fullRow: Record<string, unknown> = { ...result.value };
+  for (const key of PHASE_2_KEYS) {
+    if (fullRow[key] == null) delete fullRow[key];
+  }
+
+  let { data, error } = await auth.supabase
     .from("wedding_budgets")
-    .upsert(result.value, { onConflict: "user_id" })
+    .upsert(fullRow, { onConflict: "user_id" })
     .select("*")
     .maybeSingle();
 
+  if (error?.code === "PGRST204" || error?.code === "42703") {
+    // Either PostgREST schema cache or Postgres itself reports an unknown
+    // column — fall back to the legacy column set.
+    const legacyRow = { ...fullRow };
+    for (const key of PHASE_2_KEYS as readonly Phase2Key[]) {
+      delete legacyRow[key];
+    }
+    console.warn(
+      "PUT /api/budget — DB is missing Phase 2 columns, retrying with legacy schema. " +
+        "Run `supabase/schema.sql` against this project to enable the full wizard.",
+      { code: error.code, message: error.message },
+    );
+    ({ data, error } = await auth.supabase
+      .from("wedding_budgets")
+      .upsert(legacyRow, { onConflict: "user_id" })
+      .select("*")
+      .maybeSingle());
+  }
+
   if (error) {
-    // PostgREST sometimes returns a 404 with an empty body when its
-    // schema cache is stale (the table was created after PostgREST
-    // started). When that happens `error.code` is undefined and
-    // `error.message` is empty — fall through to a generic message.
     console.error("PUT /api/budget upsert error", {
       message: error.message,
       code: error.code,
@@ -75,7 +104,8 @@ export async function PUT(request: Request) {
       hint: error.hint,
     });
     const tablesMissing =
-      error.code === "42P01" || /relation .* does not exist/i.test(error.message);
+      error.code === "42P01" ||
+      /relation .* does not exist/i.test(error.message);
     return withCors(
       request,
       NextResponse.json(
