@@ -14,29 +14,51 @@ Monorepo for a minimal black-and-white wedding-budget **MVP**: a **React (Vite)*
 
 ## Local development
 
+Two ways to run the stack — pick one. Both clone the repo first:
+
 ```bash
 git clone https://github.com/ikiliki/wedding-hall.git
 cd wedding-hall
+```
+
+### Option A — One command, fully containerised (recommended)
+
+Brings up Postgres, gotrue (Supabase Auth), postgrest, an nginx Supabase gateway, the React client, and the Next.js server. No Supabase Cloud account needed.
+
+```bash
+docker compose up -d --build
+```
+
+URLs:
+
+| Service | URL |
+|---------|-----|
+| Client (Vite) | <http://localhost:5173> |
+| Server health | <http://localhost:3001/api/health> |
+| Supabase API gateway | <http://localhost:54321> |
+| Postgres | `localhost:54322` (user `postgres` / password `postgres`) |
+
+A one-shot `seed` container loads `supabase/seed.sql` automatically (creates the demo user `test@gmail.com` / `test1234`). Watch it finish with:
+
+```bash
+docker compose logs -f seed
+```
+
+To wipe and start fresh: `docker compose down -v && docker compose up -d --build`.
+
+See [`.cursor/skills/local-docker-stack/SKILL.md`](./.cursor/skills/local-docker-stack/SKILL.md) for more.
+
+### Option B — Native Node (no Docker)
+
+```bash
 npm install
-```
 
-### Client (port 5173)
-
-```bash
 cp client/.env.example client/.env.local
-# VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
-npm run dev:client
+# fill VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (point at Supabase Cloud or localhost:54321 if you also run docker)
+npm run dev:client     # → http://localhost:5173
+
+npm run dev:server     # → http://localhost:3001
 ```
-
-Open <http://localhost:5173>.
-
-### Server (port 3001)
-
-```bash
-npm run dev:server
-```
-
-Open <http://localhost:3001> and <http://localhost:3001/api/health>.
 
 ### All checks (from repo root)
 
