@@ -89,6 +89,33 @@ select
 - Exchanges the PKCE code, calls `upsertProfile` (best-effort), then
   routes through `getPostAuthPath`.
 
+## Symptom: "Signed up, but could not reach the Wedding Hall server"
+
+This message comes from `EmailLoginForm` when the post-auth
+`POST /api/profiles` call fails. As of the latest build it is treated
+as **non-fatal** (the DB trigger has already created the profile row,
+so we let the user in and just log a warning) — but if the user *is*
+still seeing it, the underlying call genuinely failed and three things
+are worth checking, in order:
+
+1. **`VITE_SERVER_URL` on the Vercel client project** — must point at
+   the production server URL (e.g. `https://wedding-hall-server.vercel.app`),
+   no trailing slash. Vercel does not auto-rebuild on env changes; trigger
+   a redeploy after editing.
+2. **`CLIENT_ORIGIN` on the Vercel server project** — must include the
+   production client origin (e.g. `https://wedding-hall-client.vercel.app`),
+   comma-separated if you have preview domains too. If this is missing
+   or misspelled the browser blocks the call as a CORS error and the
+   client sees it as a network failure.
+3. **Same Supabase project on both sides** — `VITE_SUPABASE_URL` /
+   `VITE_SUPABASE_ANON_KEY` (client) must match `SUPABASE_URL` /
+   `SUPABASE_ANON_KEY` (server). Mismatch produces a 401 on every
+   server call; the form now surfaces that with a specific message
+   instead of the generic "could not reach" line.
+
+`server/api/health` is a great smoke test from the browser:
+`https://<server>/api/health` should return `{ "ok": true, ... }`.
+
 ## Don't
 
 - Don't add the Supabase **service role** key to fix this. The trigger +

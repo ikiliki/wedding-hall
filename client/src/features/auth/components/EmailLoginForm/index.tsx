@@ -56,18 +56,49 @@ export function EmailLoginForm() {
     );
   }
 
-  async function ensureProfile(): Promise<{ tablesMissing: boolean; failed: boolean }> {
+  // Result of the post-auth `POST /api/profiles` round-trip.
+  //
+  //   tablesMissing — the Supabase project hasn't had schema.sql applied
+  //                   yet; the user can't proceed until it's fixed.
+  //   blockerMsg    — anything else that *should* be surfaced (only
+  //                   `unauthorized` qualifies, because that means the
+  //                   server is talking to a different Supabase project
+  //                   than the client and nothing else will work either).
+  //   warning       — non-fatal: the DB trigger already created the
+  //                   profile row, so a transient network/CORS hiccup
+  //                   shouldn't block sign-in. We just log + continue.
+  type ProfileResult =
+    | { kind: "ok" }
+    | { kind: "tablesMissing" }
+    | { kind: "blocker"; message: string }
+    | { kind: "warning"; message: string };
+
+  async function ensureProfile(): Promise<ProfileResult> {
     try {
       await upsertProfile();
-      return { tablesMissing: false, failed: false };
+      return { kind: "ok" };
     } catch (err) {
       if (err instanceof ApiError) {
-        if (err.kind === "tables_missing") {
-          return { tablesMissing: true, failed: true };
+        if (err.kind === "tables_missing") return { kind: "tablesMissing" };
+        if (err.kind === "unauthorized") {
+          return {
+            kind: "blocker",
+            message:
+              "Signed in, but the server rejected your token. The client and the server are likely pointing at different Supabase projects — verify VITE_SUPABASE_URL on the client matches SUPABASE_URL on the server.",
+          };
         }
-        console.error("upsertProfile via server failed", err);
+        const detail =
+          err.kind === "network"
+            ? `Could not reach the server at ${err.message.replace(/^.*?at\s*/, "")}.`
+            : `${err.message} (status ${err.status}).`;
+        console.warn("upsertProfile via server failed (non-fatal)", err);
+        return { kind: "warning", message: detail };
       }
-      return { tablesMissing: false, failed: true };
+      console.warn("upsertProfile via server failed (non-fatal, unknown)", err);
+      return {
+        kind: "warning",
+        message: "Could not refresh your profile right now.",
+      };
     }
   }
 
@@ -138,19 +169,17 @@ export function EmailLoginForm() {
         return;
       }
 
-      const { tablesMissing, failed } = await ensureProfile();
-      if (tablesMissing) {
+      const profileResult = await ensureProfile();
+      if (profileResult.kind === "tablesMissing") {
         setLoading(false);
         setErrorMsg(
           "Signed up, but the database tables are missing. Run supabase/seed.sql once, then click Sign in.",
         );
         return;
       }
-      if (failed) {
+      if (profileResult.kind === "blocker") {
         setLoading(false);
-        setErrorMsg(
-          "Signed up, but could not reach the Wedding Hall server. Check VITE_SERVER_URL and that the server is running.",
-        );
+        setErrorMsg(profileResult.message);
         return;
       }
       const next = await getPostAuthPath(supabase);
@@ -182,19 +211,17 @@ export function EmailLoginForm() {
       return;
     }
 
-    const { tablesMissing, failed } = await ensureProfile();
-    if (tablesMissing) {
+    const profileResult = await ensureProfile();
+    if (profileResult.kind === "tablesMissing") {
       setLoading(false);
       setErrorMsg(
         "Signed in, but the database tables are missing. Run supabase/seed.sql once, then refresh.",
       );
       return;
     }
-    if (failed) {
+    if (profileResult.kind === "blocker") {
       setLoading(false);
-      setErrorMsg(
-        "Signed in, but could not reach the Wedding Hall server. Check VITE_SERVER_URL and that the server is running.",
-      );
+      setErrorMsg(profileResult.message);
       return;
     }
     const next = await getPostAuthPath(supabase);
