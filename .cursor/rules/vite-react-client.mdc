@@ -1,5 +1,5 @@
 ---
-globs: ["client/**/*.{ts,tsx}", "client/vite.config.ts", "client/index.html"]
+globs: ["client/**/*.{ts,tsx}", "client/vite.config.ts", "client/index.html", "client/.env*"]
 ---
 
 # Vite + React client
@@ -15,12 +15,16 @@ globs: ["client/**/*.{ts,tsx}", "client/vite.config.ts", "client/index.html"]
 
 ## Server API
 - All data IO goes through `client/src/shared/lib/api.ts` (which posts to `${VITE_SERVER_URL}`). It attaches the bearer token, surfaces typed `ApiError`, and uses DTOs from `@wedding-hall/shared`.
+- The api module is **mode-aware**: it falls back to the public Wedding Hall server in production and `localhost:3001` in dev when `VITE_SERVER_URL` is unset. Don't add a third hard-coded URL elsewhere — change those constants if the server moves.
 
 ## Auth callback
 - `exchangeCodeForSession` runs in `AuthCallbackPage` after email/magic-link redirects, then calls `upsertProfile()` against the server.
 
 ## Env
-- Only `VITE_*` vars are exposed to the client bundle. Required: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SERVER_URL`.
+- Only `VITE_*` vars are exposed to the client bundle.
+- Mode defaults (committed): `client/.env.development` (`vite dev`), `client/.env.production` (`vite build`). These hold non-secret config like `VITE_SERVER_URL`.
+- Secrets (gitignored): `client/.env.local`, `client/.env.{mode}.local`. These hold real Supabase URL + anon key.
+- Required at runtime: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. `VITE_SERVER_URL` has a sane mode default but can be overridden in any layer above.
 
 ## Build
 - `npm run build -w wedding-hall-client` (or `npm run build` from root).

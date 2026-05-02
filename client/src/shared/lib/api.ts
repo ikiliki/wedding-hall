@@ -28,7 +28,6 @@ const PRODUCTION_FALLBACK = "https://wedding-hall-server.vercel.app";
 const DEVELOPMENT_FALLBACK = "http://localhost:3001";
 
 if (!RAW_SERVER_URL && import.meta.env.PROD) {
-  // eslint-disable-next-line no-console
   console.warn(
     "[wedding-hall] VITE_SERVER_URL is not set in this client bundle. " +
       "Falling back to the public Wedding Hall server " +

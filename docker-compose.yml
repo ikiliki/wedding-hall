@@ -142,7 +142,8 @@ services:
     environment:
       VITE_SUPABASE_URL: http://localhost:54321
       VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6IndlZGRpbmctaGFsbC1sb2NhbCIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxNzk5NTM1NjAwfQ.JxejbUaxXmfGDcu7-FsaoReqSHXWG1CRnKUwq06VX3o
-      VITE_SERVER_URL: http://localhost:3001
+      # VITE_SERVER_URL is resolved from client/.env.development (vite dev mode).
+      # Override here only if you want docker to point at a non-localhost server.
     volumes:
       - ./client:/repo/client
       - ./packages:/repo/packages
