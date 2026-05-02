@@ -1,0 +1,19 @@
+{
+  "name": "@wedding-hall/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./venue-pricing": "./src/venue-pricing.ts",
+    "./budget-catalog": "./src/budget-catalog.ts",
+    "./budget-selections": "./src/budget-selections.ts"
+  },
+  "scripts": {
+    "lint": "echo \"@wedding-hall/shared: no lint configured\" && exit 0",
+    "build": "echo \"@wedding-hall/shared: type-checked by consumers\" && exit 0"
+  }
+}

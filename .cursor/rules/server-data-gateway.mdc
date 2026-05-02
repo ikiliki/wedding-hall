@@ -1,0 +1,38 @@
+---
+description: How the Wedding Hall server proxies user data into Supabase (anon key + forwarded JWT, never service role).
+---
+
+# Server is the data gateway
+
+## Trust model
+
+- Browser owns the session (Supabase Auth via `@supabase/supabase-js` + anon key).
+- Every protected request to the server arrives with `Authorization: Bearer <session.access_token>`.
+- Server creates a per-request Supabase client with that bearer header (`server/src/lib/supabase.ts → supabaseForRequest`). RLS on `public.profiles` and `public.wedding_budgets` continues to enforce ownership.
+- **Never** use the Supabase **service role** key here. If a future endpoint truly needs to bypass RLS, add it deliberately and document why.
+
+## Endpoints (Phase 1)
+
+- `POST /api/profiles` — upsert current user's profile. Body: `UpsertProfilePayload`.
+- `GET /api/budget` — current user's budget (or `null`).
+- `PUT /api/budget` — upsert. Server validates with `validateBudgetPayload`, computes `estimated_total`, ignores any caller-supplied `user_id`.
+- `GET /api/health`, `GET /api/openapi.json` — system.
+
+OpenAPI spec is the source of truth: `server/src/lib/openapi.ts`.
+
+## Conventions
+
+- Route handlers: `server/src/app/api/<name>/route.ts`. Always export `OPTIONS` returning `corsPreflight(request)`, and wrap every response in `withCors(request, ...)` so the cross-origin browser call works.
+- Use `supabaseForRequest(request)` first. On failure, return its `response` (already the right 401/500).
+- Validate inputs server-side. Don't echo unvalidated DB errors to the browser; map known cases (`42P01` → "tables missing", etc.).
+- DTOs live in `@wedding-hall/shared` — both client and server import the same types so the wire format stays in lock-step.
+
+## Client must use the API helper, not supabase-js
+
+`client/src/shared/lib/api.ts` is the only place that calls `fetch` against `${VITE_SERVER_URL}`. Pages call `fetchBudget` / `saveBudget` / `upsertProfile` from there.
+
+Do **not** reintroduce `supabase.from("wedding_budgets")` or `supabase.from("profiles")` in the client. Auth (`supabase.auth.*`) stays in the browser.
+
+## Env
+
+Server reads `SUPABASE_URL`, `SUPABASE_ANON_KEY`, optional `CLIENT_ORIGIN` (comma-sep). See `.cursor/skills/wedding-hall-env-bootstrap/SKILL.md`.

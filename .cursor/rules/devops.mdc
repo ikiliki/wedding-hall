@@ -11,35 +11,43 @@ Goal: keep local development simple, production deploys hands-off.
   `db` + `auth` + `rest` + `gateway` + `client` + `server` (+ one-shot `seed`).
 - App URLs:
   - Client: <http://localhost:5173>
-  - Server health: <http://localhost:3001/api/health>
+  - Server: <http://localhost:3001> (data gateway + `/api/health`, `/docs`)
   - Supabase API gateway: <http://localhost:54321>
   - Postgres: `localhost:54322` (user `postgres` / password `postgres`)
 
 ## Stack composition
-- **db** — `supabase/postgres` image (Postgres 15 + extensions + pre-created roles).
+- **db** — `postgres:15-alpine` (init script creates Supabase roles + auth schema).
 - **auth** — `supabase/gotrue` (provides `auth` schema + `/auth/v1/*` API).
 - **rest** — `postgrest/postgrest` (exposes RLS-protected `public` schema as `/rest/v1/*`).
 - **gateway** — `nginx` routes `/auth/v1/*` to `auth`, `/rest/v1/*` to `rest`. Single base URL for `supabase-js`.
 - **seed** — one-shot container running `supabase/seed.sql` once `auth` is ready.
 - **client** / **server** — dev mode with bind-mounts for hot reload.
+  - `client` env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SERVER_URL=http://localhost:3001`.
+  - `server` env: `SUPABASE_URL=http://gateway:8000`, `SUPABASE_ANON_KEY=<dev jwt>`, `CLIENT_ORIGIN=http://localhost:5173`.
+
+## Native dev (no docker)
+- `npm run env:local` writes both `.env.local` files with the docker-stack values, then `npm run dev:client` / `npm run dev:server` against the running docker DB stack.
+- Or follow `.cursor/skills/wedding-hall-env-bootstrap/SKILL.md` mode 2 to point at Supabase Cloud.
 
 ## Local secrets (well-known, dev-only)
-Lives in `.env.docker` and is committed deliberately. Never reuse in production.
+The dev anon key + JWT secret are committed in `docker-compose.yml` and `scripts/setup-env.mjs`. **Never reuse in production.**
 
 ## Production
 - Vercel git-driven:
   - `master-client` → `wedding-hall-client` project (Vite, root `client`)
   - `master-server` → `wedding-hall-server` project (Next, root `server`)
+- Real env on the **client** Vercel project: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SERVER_URL` (the server Vercel URL).
+- Real env on the **server** Vercel project: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CLIENT_ORIGIN` (the client Vercel URL — comma-sep for previews).
 - CI on `main` runs lint + build (no deploy).
-- Real Supabase env vars on the **client** Vercel project: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 
 ## Conventions
-- Compose service names are short and lowercase. Inter-service URLs use service names (e.g. `http://auth:9999`).
+- Compose service names are short and lowercase. Inter-service URLs use service names (e.g. `http://gateway:8000`).
 - Each Dockerfile pins a specific Node major version that matches the package.json engines (`node:22-alpine`).
 - `.dockerignore` mirrors `.gitignore` plus `node_modules`, `dist`, `.next`.
 - Healthchecks on long-lived services that have a natural endpoint (`db`, `gateway`).
 - Avoid privileged containers and host networking (use the compose network).
 
 ## When in doubt
-- See `.cursor/skills/local-docker-stack/SKILL.md` for the bring-up checklist.
-- See `.cursor/skills/wedding-hall-deploy/SKILL.md` for production deploys.
+- Bring-up checklist → `.cursor/skills/local-docker-stack/SKILL.md`
+- Production deploys → `.cursor/skills/wedding-hall-deploy/SKILL.md`
+- Env bootstrapping → `.cursor/skills/wedding-hall-env-bootstrap/SKILL.md`

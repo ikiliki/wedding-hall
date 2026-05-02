@@ -21,5 +21,13 @@ export const helper = "text-xs text-muted";
 
 export const error = "text-sm text-red-400";
 
+export const errorBlock =
+  "flex flex-col gap-3 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3";
+
+export const errorActions = "flex flex-wrap gap-3";
+
+export const linkButton =
+  "text-xs uppercase tracking-luxe text-bone underline-offset-4 hover:underline";
+
 export const success =
   "rounded-xl border border-bone/30 bg-bone/5 px-4 py-3 text-sm text-bone";

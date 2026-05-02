@@ -1,7 +1,3 @@
----
-alwaysApply: true
----
-
 # Scope — Phase 1 only
 
 Governed by @PLAN.md. Do not expand scope without updating that file.
@@ -9,9 +5,12 @@ Governed by @PLAN.md. Do not expand scope without updating that file.
 ## In scope
 - Landing, login, `/auth/callback`, onboarding (5 steps), dashboard
 - `profiles` + `wedding_budgets` with RLS; upsert budget keyed by `user_id`
-- Venue tiers: cheap / average / premium / custom (prices in `client/src/shared/lib/venue-pricing.ts`)
+- Venue tiers: cheap / average / premium / custom (prices in `packages/shared/src/venue-pricing.ts`)
+- Server data gateway: `POST /api/profiles`, `GET /api/budget`, `PUT /api/budget` (+ system `GET /api/health`, `GET /api/openapi.json`)
 
 ## Explicitly out of scope
-- Extra budget categories, vendors, marketplace, payments, admin, wedding sites, microservices beyond client + server split
+- Extra budget categories, vendors, marketplace, payments, admin, wedding sites
+- Service-role / admin-bypass server endpoints
+- Any microservices split beyond `client/`, `server/`, `packages/shared/`
 
 If a request would expand scope, stop and ask.

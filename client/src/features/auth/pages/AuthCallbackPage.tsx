@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { upsertProfile } from "@/shared/lib/api";
 import { createClient } from "@/shared/lib/supabase";
 import { getPostAuthPath } from "@/shared/lib/post-auth-path";
 
@@ -43,14 +44,13 @@ export function AuthCallbackPage() {
         (user.user_metadata?.name as string | undefined) ??
         null;
 
-      await supabase.from("profiles").upsert(
-        {
-          id: user.id,
-          email: user.email ?? null,
-          full_name: fullName,
-        },
-        { onConflict: "id" },
-      );
+      try {
+        await upsertProfile({ email: user.email ?? null, full_name: fullName });
+      } catch (err) {
+        // Don't block the sign-in flow on a profile upsert hiccup —
+        // the dashboard / onboarding will surface a real error if needed.
+        console.error("auth/callback upsertProfile error", err);
+      }
 
       const next = await getPostAuthPath(supabase);
       if (cancelled) return;

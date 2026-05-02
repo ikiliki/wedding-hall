@@ -1,22 +1,26 @@
 ---
-globs: ["supabase/**", "client/src/shared/lib/supabase.ts", "client/src/**/saveBudget.ts", "client/src/features/auth/**"]
+globs: ["supabase/**", "client/src/shared/lib/supabase.ts", "server/src/lib/supabase.ts", "client/src/**/saveBudget.ts", "client/src/features/auth/**", "packages/shared/**"]
 ---
 
 # Supabase
 
 ## Single project
 - Schema: `supabase/schema.sql`. Seed + demo user: `supabase/seed.sql`.
-- Client reads/writes with **anon** key + RLS as today.
+- **Auth** stays in the browser (anon key + `supabase.auth.*`).
+- **Data** (`profiles`, `wedding_budgets`) is read/written by the **server** with the anon key + the user's forwarded JWT — RLS still applies. See `.cursor/rules/server-data-gateway.mdc`.
 
 ## Tables (Phase 1)
 - `profiles` (id = auth user id)
 - `wedding_budgets` (unique `user_id`, upsert on save)
 
-## Client env
-- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` in Vercel **client** project and `client/.env.local`.
+## Env
+- **Client** (`client/.env.local` + Vercel client project): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SERVER_URL`.
+- **Server** (`server/.env.local` + Vercel server project): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CLIENT_ORIGIN`.
+- Bootstrap automation: `.cursor/skills/wedding-hall-env-bootstrap/SKILL.md` + `npm run env:local|cloud|push-vercel`.
 
 ## Redirect URLs
 - Must list every client origin + `/auth/callback` (local `http://localhost:5173`, production client host).
 
 ## When changing schema
-- Update `schema.sql`, `seed.sql`, and `client/src/shared/lib/types.ts` together.
+- Update `schema.sql`, `seed.sql`, and `packages/shared/src/types.ts` together.
+- The OpenAPI spec at `server/src/lib/openapi.ts` and request validators at `server/src/lib/budget.ts` may also need to change.

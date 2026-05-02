@@ -4,10 +4,15 @@ globs: ["server/**/*.{ts,tsx}"]
 
 # Next.js server package
 
-- Small **Next.js 15** App Router app under `server/src/app/`.
-- Today: `GET /api/health` for deploy verification.
-- Do not add Supabase **service role** keys until there is a real server-side use case; never expose service role to the client.
+- **Next.js 15** App Router app under `server/src/app/`.
+- Acts as the **data gateway** for the client (see `.cursor/rules/server-data-gateway.mdc`).
+- Today: `GET /api/health`, `GET /api/openapi.json` (system) + `POST /api/profiles`, `GET /api/budget`, `PUT /api/budget` (data, JWT-protected).
+- Server uses Supabase **anon** key + the user's JWT (RLS still applies). Do not introduce `SUPABASE_SERVICE_ROLE_KEY` without an explicit admin use case.
 
 ## Conventions
 - API routes: `server/src/app/api/<name>/route.ts`.
-- Keep handlers thin; validate inputs if accepting POST bodies.
+- Every JSON route exports `OPTIONS` → `corsPreflight(request)` and wraps responses with `withCors(request, ...)` (`server/src/lib/cors.ts`).
+- Auth: get the user with `supabaseForRequest(request)` (`server/src/lib/supabase.ts`); short-circuit on `!ok`.
+- Validate POST/PUT bodies; return 400 with `{ error, details }` on failure.
+- DTOs come from `@wedding-hall/shared` — never invent a second copy.
+- Update `server/src/lib/openapi.ts` when adding/changing routes.

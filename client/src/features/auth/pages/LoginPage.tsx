@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EmailLoginForm } from "@/features/auth/components/EmailLoginForm";
 import { createClient } from "@/shared/lib/supabase";
+import { getPostAuthPath } from "@/shared/lib/post-auth-path";
+import * as styles from "./LoginPage.styles";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -9,9 +11,10 @@ export function LoginPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        navigate("/dashboard", { replace: true });
+        const next = await getPostAuthPath(supabase);
+        navigate(next, { replace: true });
         return;
       }
       setChecking(false);
@@ -20,31 +23,39 @@ export function LoginPage() {
 
   if (checking) {
     return (
-      <main className="flex min-h-dvh items-center justify-center text-sm text-muted">
-        Loading…
-      </main>
+      <main className={styles.checkingMain}>Loading…</main>
     );
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm text-center">
-        <p className="mb-4 text-xs uppercase tracking-luxe text-muted">
-          Sign in
-        </p>
-        <h1 className="font-serif text-3xl">Welcome.</h1>
-        <p className="mt-3 text-sm text-muted">
-          Sign in with your email and password.
-        </p>
-        <div className="mt-10">
-          <EmailLoginForm />
+    <main className={styles.root}>
+      <div className={styles.spotlight} aria-hidden />
+
+      <header className={styles.header}>
+        <Link to="/" className={styles.brand}>
+          Wedding Hall
+        </Link>
+        <Link to="/" className={styles.back}>
+          Back home
+        </Link>
+      </header>
+
+      <section className={styles.body}>
+        <div className={styles.copyCol}>
+          <p className={styles.eyebrow}>Sign in</p>
+          <h1 className={styles.title}>Welcome back.</h1>
+          <p className={styles.lede}>
+            Pick up where you left off. Your wedding budget is saved to
+            your account, so you can continue from any device.
+          </p>
         </div>
-        <p className="mt-8 text-xs text-muted">
-          <Link to="/" className="underline-offset-4 hover:underline">
-            Back home
-          </Link>
-        </p>
-      </div>
+
+        <div className={styles.formCol}>
+          <div className={styles.formCard}>
+            <EmailLoginForm />
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

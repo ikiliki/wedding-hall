@@ -1,12 +1,11 @@
----
-alwaysApply: true
----
-
 # Before you finish
 
 1. Matches @PLAN.md (Phase 1).
 2. `npm run lint` from **repo root** passes.
 3. `npm run build` from **repo root** passes.
-4. If SQL changed: `supabase/schema.sql`, `supabase/seed.sql`, and `client/src/shared/lib/types.ts` updated together.
-5. If auth URLs changed: README / Supabase dashboard redirect list stays accurate.
-6. Client changes respect feature folders + `*.styles.ts` (see component-structure rule).
+4. If SQL changed: `supabase/schema.sql`, `supabase/seed.sql`, and `packages/shared/src/types.ts` updated together.
+5. If a new `/api/*` route was added or changed: `server/src/lib/openapi.ts` updated, validators in `server/src/lib/budget.ts` (or a sibling) cover the new fields, and the matching `client/src/shared/lib/api.ts` helper exists.
+6. If auth URLs changed: README / Supabase dashboard redirect list stays accurate.
+7. If env vars changed: `.env.example`, `client/.env.example`, `server/.env.example`, `docker-compose.yml`, `scripts/setup-env.mjs`, and the env-bootstrap skill stay in sync.
+8. Client changes respect feature folders + `*.styles.ts` (see component-structure rule).
+9. No new `supabase.from(...)` calls in the client — data IO must go through `client/src/shared/lib/api.ts`.

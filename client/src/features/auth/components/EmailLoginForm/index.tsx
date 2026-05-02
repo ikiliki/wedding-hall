@@ -1,12 +1,16 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/Button";
+import { ApiError, upsertProfile } from "@/shared/lib/api";
 import { createClient } from "@/shared/lib/supabase";
 import { getPostAuthPath } from "@/shared/lib/post-auth-path";
 import * as styles from "./EmailLoginForm.styles";
 
-const DEFAULT_EMAIL = "test@gmail.com";
-const DEFAULT_PASSWORD = "test1234";
+// Dev-only convenience: pre-fill the seeded demo user when running locally.
+// In production (any non-dev Vite build) the fields stay empty so the form
+// looks like a real product, not a demo.
+const DEFAULT_EMAIL = import.meta.env.DEV ? "test@gmail.com" : "";
+const DEFAULT_PASSWORD = import.meta.env.DEV ? "test1234" : "";
 
 type Mode = "signin" | "signup";
 
@@ -18,12 +22,15 @@ export function EmailLoginForm() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // When set, the inline error gets a "Switch to sign in" action button.
+  const [showSwitchToSignin, setShowSwitchToSignin] = useState(false);
 
   function switchMode(next: Mode) {
     if (next === mode) return;
     setMode(next);
     setErrorMsg(null);
     setInfo(null);
+    setShowSwitchToSignin(false);
     if (next === "signup") {
       setEmail("");
       setPassword("");
@@ -33,37 +40,42 @@ export function EmailLoginForm() {
     }
   }
 
-  async function upsertProfile(): Promise<{ tablesMissing: boolean }> {
+  async function handlePasswordReset() {
+    setErrorMsg(null);
+    setInfo(null);
     const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return { tablesMissing: false };
-    const { error } = await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        email: user.email ?? null,
-        full_name:
-          (user.user_metadata?.full_name as string | undefined) ??
-          (user.user_metadata?.name as string | undefined) ??
-          null,
-      },
-      { onConflict: "id" },
-    );
-    if (
-      error &&
-      (error.code === "42P01" ||
-        /relation .* does not exist/i.test(error.message))
-    ) {
-      return { tablesMissing: true };
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    });
+    if (error) {
+      setErrorMsg(error.message);
+      return;
     }
-    return { tablesMissing: false };
+    setInfo(
+      `Sent a password-reset link to ${email.trim()}. Open the email and pick a new password.`,
+    );
+  }
+
+  async function ensureProfile(): Promise<{ tablesMissing: boolean; failed: boolean }> {
+    try {
+      await upsertProfile();
+      return { tablesMissing: false, failed: false };
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.kind === "tables_missing") {
+          return { tablesMissing: true, failed: true };
+        }
+        console.error("upsertProfile via server failed", err);
+      }
+      return { tablesMissing: false, failed: true };
+    }
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrorMsg(null);
     setInfo(null);
+    setShowSwitchToSignin(false);
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !/.+@.+\..+/.test(trimmedEmail)) {
@@ -91,13 +103,14 @@ export function EmailLoginForm() {
         setLoading(false);
         if (/email rate limit/i.test(error.message)) {
           setErrorMsg(
-            'Email rate limit hit. Turn OFF "Confirm email" in Supabase -> Authentication -> Providers -> Email, then try again. (No emails will be sent and signup is instant.)',
+            'Email rate limit hit. Turn OFF "Confirm email" in Supabase → Authentication → Providers → Email, then try again.',
           );
           return;
         }
-        if (/already registered|user already exists/i.test(error.message)) {
+        if (/already registered|user already exists|already.+exists/i.test(error.message)) {
+          setShowSwitchToSignin(true);
           setErrorMsg(
-            'That email already has an account. Switch to "Sign in".',
+            "This email already has an account. Sign in below, or send a password-reset link.",
           );
           return;
         }
@@ -105,23 +118,43 @@ export function EmailLoginForm() {
         return;
       }
 
-      if (!data.session) {
+      // Some Supabase configurations return a fake user with no identities
+      // when the email is taken (instead of a hard error). Detect that.
+      const identities = data.user?.identities;
+      if (data.user && Array.isArray(identities) && identities.length === 0) {
         setLoading(false);
-        setInfo(
-          `Account created. Supabase requires email confirmation - check the inbox for ${trimmedEmail}, then come back and sign in. (To skip: turn OFF "Confirm email" in Supabase Auth -> Providers -> Email.)`,
+        setShowSwitchToSignin(true);
+        setErrorMsg(
+          "This email already has an account. Sign in below, or send a password-reset link.",
         );
         return;
       }
 
-      const { tablesMissing } = await upsertProfile();
-      setLoading(false);
+      if (!data.session) {
+        setLoading(false);
+        setInfo(
+          `Account created. Check ${trimmedEmail} for a confirmation link, then sign in.`,
+        );
+        return;
+      }
+
+      const { tablesMissing, failed } = await ensureProfile();
       if (tablesMissing) {
+        setLoading(false);
         setErrorMsg(
-          "Signed up, but the database tables are missing. Open Supabase -> SQL Editor and run supabase/seed.sql once, then click Sign in.",
+          "Signed up, but the database tables are missing. Run supabase/seed.sql once, then click Sign in.",
+        );
+        return;
+      }
+      if (failed) {
+        setLoading(false);
+        setErrorMsg(
+          "Signed up, but could not reach the Wedding Hall server. Check VITE_SERVER_URL and that the server is running.",
         );
         return;
       }
       const next = await getPostAuthPath(supabase);
+      setLoading(false);
       navigate(next, { replace: true });
       return;
     }
@@ -135,13 +168,13 @@ export function EmailLoginForm() {
       setLoading(false);
       if (/email not confirmed/i.test(error.message)) {
         setErrorMsg(
-          "This account exists but its email is not confirmed. Confirm it from the inbox, or run supabase/seed.sql to seed a pre-confirmed demo user.",
+          "This account exists but its email is not confirmed. Open the confirmation email, or run supabase/seed.sql to seed a pre-confirmed demo user.",
         );
         return;
       }
       if (/invalid login credentials/i.test(error.message)) {
         setErrorMsg(
-          'No account found, or wrong password. For the demo user, run supabase/seed.sql in Supabase. Or tap "Sign up" to create a new account.',
+          'Wrong email or password. Tap "Sign up" to create a new account.',
         );
         return;
       }
@@ -149,15 +182,23 @@ export function EmailLoginForm() {
       return;
     }
 
-    const { tablesMissing } = await upsertProfile();
-    setLoading(false);
+    const { tablesMissing, failed } = await ensureProfile();
     if (tablesMissing) {
+      setLoading(false);
       setErrorMsg(
-        "Signed in, but the database tables are missing. Open Supabase -> SQL Editor and run supabase/seed.sql once, then refresh.",
+        "Signed in, but the database tables are missing. Run supabase/seed.sql once, then refresh.",
+      );
+      return;
+    }
+    if (failed) {
+      setLoading(false);
+      setErrorMsg(
+        "Signed in, but could not reach the Wedding Hall server. Check VITE_SERVER_URL and that the server is running.",
       );
       return;
     }
     const next = await getPostAuthPath(supabase);
+    setLoading(false);
     navigate(next, { replace: true });
   }
 
@@ -230,9 +271,29 @@ export function EmailLoginForm() {
       </div>
 
       {errorMsg && (
-        <p className={styles.error} role="alert">
-          {errorMsg}
-        </p>
+        <div className={styles.errorBlock}>
+          <p className={styles.error} role="alert">
+            {errorMsg}
+          </p>
+          {showSwitchToSignin && (
+            <div className={styles.errorActions}>
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={() => switchMode("signin")}
+              >
+                Switch to sign in
+              </button>
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={handlePasswordReset}
+              >
+                Email me a reset link
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {info && (

@@ -1,0 +1,22 @@
+# Keep the docker build context lean. The Dockerfile builds from repo root
+# now (so npm workspaces resolve `@wedding-hall/shared`); without this
+# file the full host node_modules / .next / dist trees would all be sent
+# to the daemon on every `docker compose up --build`.
+
+**/node_modules
+**/dist
+**/.next
+**/.vite
+**/.vercel
+**/.git
+
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+
+# Editor / OS noise
+.idea
+.vscode

@@ -13,10 +13,12 @@ export default function HomePage() {
           Health: <a href="/api/health">/api/health</a>
         </li>
       </ul>
-      <p style={{ color: "#666", fontSize: 14, maxWidth: 480 }}>
-        This deploy is separate from the React client. Supabase (database +
-        auth for the browser) is configured in the Supabase dashboard; add a
-        service role key here only when this service needs admin access.
+      <p style={{ color: "#666", fontSize: 14, maxWidth: 560 }}>
+        This deploy is the Wedding Hall API. The browser handles auth
+        (sign-in/out) directly against Supabase, then forwards the user
+        JWT here for every <code>/api/profiles</code> and{" "}
+        <code>/api/budget</code> call. The server uses the Supabase{" "}
+        <strong>anon</strong> key only — RLS keeps enforcing row ownership.
       </p>
     </main>
   );

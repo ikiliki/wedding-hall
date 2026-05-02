@@ -1,32 +1,62 @@
-export const wrapper =
-  "mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 py-10";
+export const headerCard =
+  "relative overflow-hidden rounded-3xl border border-line bg-surfaceRaised/60 p-8 shadow-luxe sm:p-12";
 
-export const header = "mb-10 flex items-center justify-between";
+export const headerEyebrow =
+  "text-[10px] uppercase tracking-luxe text-muted";
 
-export const eyebrow =
-  "text-xs uppercase tracking-luxe text-muted";
+export const headerCouple =
+  "mt-4 font-serif text-4xl leading-[1.1] sm:text-6xl";
 
-export const couple =
-  "mt-2 font-serif text-3xl leading-tight sm:text-4xl";
+export const amp =
+  "italic text-bone/60";
 
-export const card =
-  "rounded-2xl border border-line bg-black/40 p-6";
+export const headerMeta =
+  "mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-muted";
+
+export const headerProgressRow =
+  "mt-10 flex items-center gap-6";
+
+export const totalsRow =
+  "grid grid-cols-1 gap-6 lg:grid-cols-[420px_minmax(0,1fr)]";
+
+export const totalCard =
+  "rounded-3xl border border-line bg-surfaceRaised/60 p-8 shadow-luxe";
 
 export const totalEyebrow =
-  "text-xs uppercase tracking-luxe text-muted";
+  "text-[10px] uppercase tracking-luxe text-muted";
 
 export const totalAmount =
-  "mt-2 font-serif text-5xl tracking-tight text-bone";
+  "mt-3 font-serif text-5xl tabular-nums sm:text-6xl";
 
-export const breakdown =
-  "mt-8 grid grid-cols-1 gap-3 text-sm";
+export const totalSub =
+  "mt-3 text-xs text-muted";
 
-export const row = "flex items-center justify-between border-b border-line py-3";
+export const totalCta =
+  "mt-8 flex flex-wrap items-center gap-6";
 
-export const rowLast = "flex items-center justify-between py-3";
+export const totalCtaLink =
+  "text-[11px] uppercase tracking-luxe text-bone underline-offset-4 hover:underline";
 
-export const rowKey = "uppercase tracking-luxe text-muted text-xs";
+export const totalCtaLinkMuted =
+  "text-[11px] uppercase tracking-luxe text-muted underline-offset-4 hover:text-bone";
 
-export const rowValue = "text-bone";
+export const tilesCol =
+  "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2";
 
-export const note = "mt-10 text-xs text-muted";
+export const tile =
+  "group flex h-full flex-col justify-between rounded-3xl border border-line bg-surfaceRaised/40 p-6 transition hover:border-bone/60 hover:bg-surfaceRaised/80 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 aria-disabled:hover:border-line aria-disabled:hover:bg-surfaceRaised/40";
+
+export const tileEyebrow =
+  "text-[10px] uppercase tracking-luxe text-muted";
+
+export const tileTitle =
+  "mt-4 font-serif text-2xl";
+
+export const tileBody =
+  "mt-3 text-xs leading-relaxed text-muted";
+
+export const tileCta =
+  "mt-6 text-[11px] uppercase tracking-luxe text-bone underline-offset-4 group-hover:underline";
+
+export const tileCtaMuted =
+  "mt-6 text-[11px] uppercase tracking-luxe text-muted";

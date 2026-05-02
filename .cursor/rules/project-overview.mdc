@@ -1,14 +1,11 @@
----
-alwaysApply: true
----
-
 # Wedding Hall — monorepo overview
 
 Wedding-budget **MVP** (Phase 1): email/password auth, onboarding wizard, venue estimate dashboard.
 
 ## Packages
-- **`client/`** — Vite + React 19 + TypeScript + Tailwind. SPA with React Router. Supabase JS in the browser (anon key + RLS).
-- **`server/`** — Next.js 15 (App Router), minimal: `GET /api/health` + room to grow.
+- **`client/`** — Vite + React 19 + TypeScript + Tailwind. SPA with React Router. Auth (`supabase.auth.*`) in the browser; **all data calls go through the server** via `client/src/shared/lib/api.ts`.
+- **`server/`** — Next.js 15 (App Router). Data gateway between the SPA and Supabase. Endpoints: `GET /api/health`, `GET /api/openapi.json`, `POST /api/profiles`, `GET /api/budget`, `PUT /api/budget`. Uses Supabase **anon** key + the user's forwarded JWT — RLS still applies.
+- **`packages/shared/`** — `@wedding-hall/shared`. Cross-package types (`Profile`, `WeddingBudget`, payloads) and the venue tier prices. Single source of truth for both client and server.
 - **`supabase/`** — Postgres schema + RLS + seed (`schema.sql`, `seed.sql`).
 
 ## Docs (read first)
@@ -18,7 +15,9 @@ Wedding-budget **MVP** (Phase 1): email/password auth, onboarding wizard, venue 
 - @AGENTS.md — agent orientation + skill link
 
 ## Root scripts
-From repo root: `npm run dev:client` · `npm run dev:server` · `npm run lint` · `npm run build`
+From repo root:
+- `npm run dev:client` · `npm run dev:server` · `npm run lint` · `npm run build`
+- `npm run env:local` · `npm run env:cloud -- --ref <project-ref>` · `npm run env:push-vercel -- --client-project ... --server-project ...`
 
 ## Deploy model
 - Production **client**: branch **`master-client`** (or Vercel project root `client`).

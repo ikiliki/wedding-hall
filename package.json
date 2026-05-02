@@ -1,11 +1,14 @@
 {
   "name": "wedding-hall",
   "private": true,
-  "workspaces": ["client", "server"],
+  "workspaces": ["client", "server", "packages/*"],
   "scripts": {
     "dev:client": "npm run dev -w wedding-hall-client",
     "dev:server": "npm run dev -w wedding-hall-server",
     "build": "npm run build -w wedding-hall-client && npm run build -w wedding-hall-server",
-    "lint": "npm run lint -w wedding-hall-client && npm run lint -w wedding-hall-server"
+    "lint": "npm run lint -w wedding-hall-client && npm run lint -w wedding-hall-server",
+    "env:local": "node scripts/setup-env.mjs --local",
+    "env:cloud": "node scripts/setup-env.mjs --from-supabase",
+    "env:push-vercel": "node scripts/setup-env.mjs --push-vercel"
   }
 }

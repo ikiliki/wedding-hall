@@ -114,43 +114,67 @@ services:
       PGPASSWORD: postgres
     volumes:
       - ./supabase/seed.sql:/seed.sql:ro
+    # Run the seed AND ping PostgREST to refresh its schema cache. PostgREST
+    # boots before the tables exist, so without this NOTIFY the first PUT
+    # to /api/budget returns "404 / empty body" until you manually restart
+    # the rest container.
     entrypoint:
       - sh
       - -c
-      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && echo '✓ Wedding Hall seeded'"
+      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && psql -h db -U postgres -d postgres -c \"NOTIFY pgrst, 'reload schema';\" && echo '✓ Wedding Hall seeded'"
     restart: "no"
 
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      # Repo root so the Dockerfile can pull in `packages/shared` and
+      # let npm workspaces resolve `@wedding-hall/shared`.
+      context: .
+      dockerfile: client/Dockerfile
     container_name: wh-client
     restart: unless-stopped
     depends_on:
       - gateway
+      - server
     ports:
       - "5173:5173"
     environment:
       VITE_SUPABASE_URL: http://localhost:54321
       VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6IndlZGRpbmctaGFsbC1sb2NhbCIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxNzk5NTM1NjAwfQ.JxejbUaxXmfGDcu7-FsaoReqSHXWG1CRnKUwq06VX3o
+      VITE_SERVER_URL: http://localhost:3001
     volumes:
-      - ./client:/app
-      - client_node_modules:/app/node_modules
+      - ./client:/repo/client
+      - ./packages:/repo/packages
+      # Keep node_modules and the shared symlink isolated from the host
+      # so Linux container symlinks don't fight with Windows file mounts.
+      - client_node_modules:/repo/node_modules
+      - client_workspace_node_modules:/repo/client/node_modules
 
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
     container_name: wh-server
     restart: unless-stopped
+    depends_on:
+      - gateway
     ports:
       - "3001:3001"
+    environment:
+      # Server reaches the Supabase gateway on the docker network using
+      # the well-known dev anon key (matches `auth` / `rest` JWT secret).
+      SUPABASE_URL: http://gateway:8000
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6IndlZGRpbmctaGFsbC1sb2NhbCIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxNzk5NTM1NjAwfQ.JxejbUaxXmfGDcu7-FsaoReqSHXWG1CRnKUwq06VX3o
+      CLIENT_ORIGIN: http://localhost:5173
     volumes:
-      - ./server:/app
-      - server_node_modules:/app/node_modules
+      - ./server:/repo/server
+      - ./packages:/repo/packages
+      - server_node_modules:/repo/node_modules
+      - server_workspace_node_modules:/repo/server/node_modules
 
 volumes:
   db_data:
   client_node_modules:
   server_node_modules:
+  client_workspace_node_modules:
+  server_workspace_node_modules:
 

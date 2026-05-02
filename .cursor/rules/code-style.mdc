@@ -1,16 +1,14 @@
----
-alwaysApply: true
----
-
 # Code style
 
 ## TypeScript
 - Strict. No `any` without a short justification.
-- Prefer `type` for props and DTOs. Reuse `client/src/shared/lib/types.ts` in the client.
+- Prefer `type` for props and DTOs.
+- **Cross-package DTOs live in `@wedding-hall/shared`** (`packages/shared/src/types.ts`). Both client (`client/src/shared/lib/types.ts` re-exports) and server import from there. Never invent a second copy.
 
 ## Imports
 - Client: `@/` → `client/src/*` (Vite alias).
 - Server: `@/` → `server/src/*` (Next alias).
+- Both can import from `@wedding-hall/shared`.
 
 ## React (client)
 - Functional components. Hooks where needed.
@@ -18,9 +16,11 @@ alwaysApply: true
 
 ## Errors & logging
 - User-facing: clear `Error` messages. Log with `console.error("context", err)` where useful.
+- Client API errors flow through `ApiError` from `client/src/shared/lib/api.ts` (kinds: `unauthorized`, `tables_missing`, `validation`, `network`, `server`). Discriminate on `kind`, not on string matching.
 
 ## Money
-- Use `formatILS()` from venue-pricing. Do not scatter `₪` formatting.
+- Use `formatILS()` and `VENUE_PRICES` from `@wedding-hall/shared` (re-exported as `client/src/shared/lib/venue-pricing.ts` for the client). Tier numbers only in that one module.
 
-## Server (when added)
-- Validate and clamp numbers server-side if the server ever persists user data.
+## Server
+- Validate and clamp numbers server-side for any persisted user data.
+- Compute derived fields (e.g. `estimated_total`) on the server, not from request bodies.

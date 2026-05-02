@@ -10,13 +10,17 @@ globs: ["client/**/*.{ts,tsx}", "client/vite.config.ts", "client/index.html"]
 
 ## Supabase in the browser
 - `createClient()` in `client/src/shared/lib/supabase.ts` uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+- Used **only for auth** (`supabase.auth.*`) and to fetch the access token for `Authorization: Bearer ...`. Never call `supabase.from(...)` from the client.
 - Session: `@supabase/supabase-js` default storage (localStorage). No Next middleware — use `RequireAuth` + `onAuthStateChange` where needed.
 
+## Server API
+- All data IO goes through `client/src/shared/lib/api.ts` (which posts to `${VITE_SERVER_URL}`). It attaches the bearer token, surfaces typed `ApiError`, and uses DTOs from `@wedding-hall/shared`.
+
 ## Auth callback
-- `exchangeCodeForSession` runs in `AuthCallbackPage` after email/magic-link redirects.
+- `exchangeCodeForSession` runs in `AuthCallbackPage` after email/magic-link redirects, then calls `upsertProfile()` against the server.
 
 ## Env
-- Only `VITE_*` vars are exposed to the client bundle.
+- Only `VITE_*` vars are exposed to the client bundle. Required: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SERVER_URL`.
 
 ## Build
-- `npm run build -w wedding-hall-client` (or `npm run build` from root after client workspace).
+- `npm run build -w wedding-hall-client` (or `npm run build` from root).
