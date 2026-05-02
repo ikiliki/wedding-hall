@@ -96,6 +96,23 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_auth_user();
 
+-- Backfill: any auth.users that pre-date the trigger (e.g. signups
+-- attempted before this migration shipped) get a profile row now.
+-- This is what unblocks the "email already registered but I can't see
+-- the user" case from the production sign-up bug.
+insert into public.profiles (id, email, full_name)
+select
+  u.id,
+  u.email,
+  coalesce(
+    u.raw_user_meta_data ->> 'full_name',
+    u.raw_user_meta_data ->> 'name',
+    null
+  )
+from auth.users u
+left join public.profiles p on p.id = u.id
+where p.id is null;
+
 -- ============================================================
 -- wedding_budgets
 -- ============================================================
