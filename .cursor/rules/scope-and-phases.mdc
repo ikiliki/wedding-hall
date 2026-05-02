@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+# Scope — Phase 1 only
+
+Governed by @PLAN.md. Do not expand scope without updating that file.
+
+## In scope
+- Landing, login, `/auth/callback`, onboarding (5 steps), dashboard
+- `profiles` + `wedding_budgets` with RLS; upsert budget keyed by `user_id`
+- Venue tiers: cheap / average / premium / custom (prices in `client/src/shared/lib/venue-pricing.ts`)
+
+## Explicitly out of scope
+- Extra budget categories, vendors, marketplace, payments, admin, wedding sites, microservices beyond client + server split
+
+If a request would expand scope, stop and ask.

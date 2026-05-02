@@ -1,0 +1,26 @@
+---
+alwaysApply: true
+---
+
+# Wedding Hall — monorepo overview
+
+Wedding-budget **MVP** (Phase 1): email/password auth, onboarding wizard, venue estimate dashboard.
+
+## Packages
+- **`client/`** — Vite + React 19 + TypeScript + Tailwind. SPA with React Router. Supabase JS in the browser (anon key + RLS).
+- **`server/`** — Next.js 15 (App Router), minimal: `GET /api/health` + room to grow.
+- **`supabase/`** — Postgres schema + RLS + seed (`schema.sql`, `seed.sql`).
+
+## Docs (read first)
+- @PLAN.md — scope
+- @RULES.md — binding rules
+- @README.md — setup, env, deploy, Supabase URLs
+- @AGENTS.md — agent orientation + skill link
+
+## Root scripts
+From repo root: `npm run dev:client` · `npm run dev:server` · `npm run lint` · `npm run build`
+
+## Deploy model
+- Production **client**: branch **`master-client`** (or Vercel project root `client`).
+- Production **server**: branch **`master-server`** (or Vercel project root `server`).
+- Integration: **`main`** / **`master`** + `ci.yml` (lint + build, no deploy).

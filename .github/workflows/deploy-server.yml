@@ -1,0 +1,44 @@
+# Production deploy: minimal Next.js API in /server
+# Secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_SERVER
+
+name: Deploy server
+
+on:
+  push:
+    branches: [master-server]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-server-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install (workspaces)
+        run: npm ci
+
+      - name: Lint (server)
+        run: npm run lint -w wedding-hall-server
+
+      - name: Build (server)
+        run: npm run build -w wedding-hall-server
+
+      - name: Deploy to Vercel (production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_SERVER }}
+          working-directory: server
+          vercel-args: "--prod"

@@ -1,0 +1,10 @@
+---
+globs: ["client/**/*.styles.ts", "client/**/*.tsx", "client/tailwind.config.ts", "client/src/index.css"]
+---
+
+# Styling (client)
+
+- Tokens: `ink`, `bone`, `muted`, `line`, `tracking-luxe` — see `client/tailwind.config.ts`.
+- Mobile-first breakpoints. Black / white minimal luxury.
+- Avoid raw hex in components; use tokens.
+- Keep focus styles visible for accessibility.

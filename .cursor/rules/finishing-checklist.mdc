@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+---
+
+# Before you finish
+
+1. Matches @PLAN.md (Phase 1).
+2. `npm run lint` from **repo root** passes.
+3. `npm run build` from **repo root** passes.
+4. If SQL changed: `supabase/schema.sql`, `supabase/seed.sql`, and `client/src/shared/lib/types.ts` updated together.
+5. If auth URLs changed: README / Supabase dashboard redirect list stays accurate.
+6. Client changes respect feature folders + `*.styles.ts` (see component-structure rule).

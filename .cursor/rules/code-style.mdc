@@ -1,0 +1,26 @@
+---
+alwaysApply: true
+---
+
+# Code style
+
+## TypeScript
+- Strict. No `any` without a short justification.
+- Prefer `type` for props and DTOs. Reuse `client/src/shared/lib/types.ts` in the client.
+
+## Imports
+- Client: `@/` → `client/src/*` (Vite alias).
+- Server: `@/` → `server/src/*` (Next alias).
+
+## React (client)
+- Functional components. Hooks where needed.
+- Prefer feature-local state; lift only when shared across routes.
+
+## Errors & logging
+- User-facing: clear `Error` messages. Log with `console.error("context", err)` where useful.
+
+## Money
+- Use `formatILS()` from venue-pricing. Do not scatter `₪` formatting.
+
+## Server (when added)
+- Validate and clamp numbers server-side if the server ever persists user data.

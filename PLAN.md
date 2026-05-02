@@ -6,7 +6,7 @@ This plan governs what is in scope. New work must reference this file.
 
 - Landing page
 - Email + password login (Supabase) - pre-filled MVP demo credentials
-- Auth callback
+- Auth callback (OAuth / email confirmation redirect)
 - User profile creation/loading
 - Wedding onboarding flow:
   - Couple names
@@ -17,13 +17,17 @@ This plan governs what is in scope. New work must reference this file.
 - Save budget to Supabase by `user_id`
 - Dashboard with saved estimate
 
-### Phase 1 routes
+### Phase 1 routes (client — Vite dev server default port **5173**)
 
 - `/`
 - `/login`
 - `/auth/callback`
 - `/onboarding`
 - `/dashboard`
+
+### Server (Phase 1)
+
+- `GET /api/health` — liveness for deploys and monitoring
 
 ### Venue pricing (ILS per guest)
 
@@ -35,6 +39,8 @@ This plan governs what is in scope. New work must reference this file.
 | Custom  | user-entered    |
 
 `estimated_total = guest_count * venue_price_per_guest`
+
+Source of truth in-repo: `client/src/shared/lib/venue-pricing.ts`.
 
 ## Future phases (NOT in Phase 1, do not build yet)
 

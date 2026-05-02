@@ -1,0 +1,20 @@
+---
+globs: ["client/src/**/*.tsx", "client/src/**/*.styles.ts"]
+---
+
+# Client component structure
+
+## Feature-first
+- UI lives under `client/src/features/<feature>/components/<Name>/` with `index.tsx` + `<Name>.styles.ts`.
+- Route screens under `client/src/features/<feature>/pages/` (e.g. `LoginPage.tsx`).
+- Feature-specific helpers: `client/src/features/<feature>/lib/`.
+
+## Shared
+- Reusable primitives: `client/src/shared/components/<Name>/`.
+- Cross-cutting helpers: `client/src/shared/lib/`.
+
+## Stories
+- Storybook is **planned**, not installed. Do not add Storybook in passing; if you add it, do so deliberately and align with @RULES.md.
+
+## Styling
+- Tailwind class strings live in `*.styles.ts`, composed in the component (array + `filter(Boolean).join(" ")` pattern).

@@ -1,0 +1,22 @@
+---
+globs: ["supabase/**", "client/src/shared/lib/supabase.ts", "client/src/**/saveBudget.ts", "client/src/features/auth/**"]
+---
+
+# Supabase
+
+## Single project
+- Schema: `supabase/schema.sql`. Seed + demo user: `supabase/seed.sql`.
+- Client reads/writes with **anon** key + RLS as today.
+
+## Tables (Phase 1)
+- `profiles` (id = auth user id)
+- `wedding_budgets` (unique `user_id`, upsert on save)
+
+## Client env
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` in Vercel **client** project and `client/.env.local`.
+
+## Redirect URLs
+- Must list every client origin + `/auth/callback` (local `http://localhost:5173`, production client host).
+
+## When changing schema
+- Update `schema.sql`, `seed.sql`, and `client/src/shared/lib/types.ts` together.

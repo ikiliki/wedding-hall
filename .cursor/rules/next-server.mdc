@@ -1,0 +1,13 @@
+---
+globs: ["server/**/*.{ts,tsx}"]
+---
+
+# Next.js server package
+
+- Small **Next.js 15** App Router app under `server/src/app/`.
+- Today: `GET /api/health` for deploy verification.
+- Do not add Supabase **service role** keys until there is a real server-side use case; never expose service role to the client.
+
+## Conventions
+- API routes: `server/src/app/api/<name>/route.ts`.
+- Keep handlers thin; validate inputs if accepting POST bodies.

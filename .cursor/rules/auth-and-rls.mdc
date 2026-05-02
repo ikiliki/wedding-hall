@@ -1,0 +1,19 @@
+---
+description: Auth flows, RLS, and user-scoped data for Wedding Hall (SPA + Supabase).
+---
+
+# Auth & RLS
+
+## Browser session
+- Client uses `supabase.auth.*` with the anon key. Protected UI: `RequireAuth` + route guards that query `getSession` / `getUser`.
+
+## RLS
+- All user-owned tables use policies keyed on `auth.uid()` — see `supabase/schema.sql`.
+- Never trust a client-supplied `user_id`; derive the user from the session on write paths.
+
+## Profiles & budgets
+- Upsert `profiles` after sign-in / callback when you have a `user` object.
+- Budget writes: same shape as before; `saveBudget` in `client/src/features/onboarding/lib/saveBudget.ts`.
+
+## Demo / email confirmation
+- Seeded user and local demo expect **Confirm email** off for frictionless QA — see README.

@@ -1,132 +1,107 @@
 # Wedding Hall
 
-Minimal, black-and-white wedding-budget MVP. A user signs in with email + password (pre-filled demo creds for now), walks through a short onboarding wizard, and lands on a dashboard with their venue budget estimate.
+Monorepo for a minimal black-and-white wedding-budget **MVP**: a **React (Vite)** client and a small **Next.js** server, with **Supabase** (Auth + Postgres) and deploys on **Vercel**.
 
-Stack: **Next.js 15 (App Router)** + **TypeScript** + **Tailwind CSS** + **Supabase Auth + Postgres** + **Vercel**.
+> Scope: [`PLAN.md`](./PLAN.md). Rules: [`RULES.md`](./RULES.md). Agent context: [`AGENTS.md`](./AGENTS.md).
 
-> Scope is governed by [`PLAN.md`](./PLAN.md). Working rules are in [`RULES.md`](./RULES.md).
+## Repository layout
 
----
+| Path | Role |
+|------|------|
+| [`client/`](./client/) | Vite + React + TypeScript + Tailwind. Feature-based folders under `client/src/features/`. Auth and budget CRUD talk to Supabase from the browser (anon key + RLS). |
+| [`server/`](./server/) | Minimal Next.js 15 app (`/api/health` today). Expand with APIs or webhooks when needed. |
+| [`supabase/`](./supabase/) | `schema.sql`, `seed.sql` — single Supabase project for DB + Auth. |
 
-## 1. Local setup
+## Local development
 
 ```bash
 git clone https://github.com/ikiliki/wedding-hall.git
 cd wedding-hall
 npm install
-cp .env.example .env.local
-# fill in NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (see step 2)
-npm run dev
 ```
 
-App runs on <http://localhost:3000>.
-
----
-
-## 2. Supabase setup
-
-1. Create a new project at <https://supabase.com>.
-2. Go to **Project Settings -> API** and copy:
-   - `Project URL` -> `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon` `public` API key -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. **Authentication -> Providers -> Email**: leave enabled (default). For the MVP demo flow with `test@gmail.com` / `test1234`, **turn OFF "Confirm email"** under that provider's settings — otherwise Supabase will block the auto-signup until the user clicks a confirmation link in an inbox we don't control.
-4. Go to **Authentication -> URL Configuration** and add to **Redirect URLs**:
-   ```
-   http://localhost:3000/auth/callback
-   https://<your-vercel-domain>/auth/callback
-   ```
-   Set **Site URL** to your production domain (or `http://localhost:3000` while developing).
-
-### Run the database setup (one file)
-
-Open **SQL Editor** in Supabase, paste the entire contents of [`supabase/seed.sql`](./supabase/seed.sql), and click **Run**.
-
-That single file:
-1. Creates the `profiles` and `wedding_budgets` tables and their row-level security policies.
-2. Inserts a pre-confirmed demo user `test@gmail.com` / `test1234` straight into `auth.users` (so the pre-filled login form on `/login` signs in immediately, no email needed).
-
-It's idempotent — safe to re-run any time. Schema-only callers can still use [`supabase/schema.sql`](./supabase/schema.sql).
-
-### Disable email confirmation for the demo flow
-
-Authentication -> **Providers -> Email** -> turn OFF **Confirm email** -> Save. Otherwise Supabase rate-limits signups (`email rate limit exceeded`) since the free tier sends only ~2 confirmation emails per hour.
-
----
-
-## 3. Environment variables
-
-`.env.local` (local) and Vercel project env (production + preview + development) both need:
-
-| Key                              | Value                                  |
-| -------------------------------- | -------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`       | Your Supabase project URL              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | Your Supabase `anon` `public` API key  |
-
-There are no server-side secrets in Phase 1. The anon key is safe to expose to the browser; row-level security in Postgres is what protects user data.
-
----
-
-## 4. Deploy to Vercel
-
-### Option A: GitHub import (recommended)
-
-1. Push this repo to GitHub (it already lives at `https://github.com/ikiliki/wedding-hall.git`).
-2. Go to <https://vercel.com/new>, import the repo.
-3. Framework preset will auto-detect as **Next.js**. Leave defaults.
-4. Add the two environment variables under **Environment Variables** (Production, Preview, Development).
-5. Click **Deploy**.
-6. After the first deploy, copy the production URL and add `https://<that-domain>/auth/callback` to Supabase **Authentication -> URL Configuration -> Redirect URLs**.
-
-### Option B: Vercel CLI
+### Client (port 5173)
 
 ```bash
-npm i -g vercel
-vercel login
-vercel link
-vercel env add NEXT_PUBLIC_SUPABASE_URL
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
-vercel --prod
+cp client/.env.example client/.env.local
+# VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+npm run dev:client
 ```
 
----
+Open <http://localhost:5173>.
 
-## 5. Scripts
+### Server (port 3001)
 
 ```bash
-npm run dev     # local dev server
-npm run lint    # eslint
-npm run build   # production build (must pass before any deploy)
-npm start       # run the production build locally
+npm run dev:server
+```
+
+Open <http://localhost:3001> and <http://localhost:3001/api/health>.
+
+### All checks (from repo root)
+
+```bash
+npm run lint
+npm run build
 ```
 
 ---
 
-## 6. Project layout
+## Supabase (one project)
 
-```
-src/
-  app/                    # routes (App Router)
-    page.tsx              # /
-    login/page.tsx        # /login
-    auth/callback/route.ts# /auth/callback
-    onboarding/page.tsx   # /onboarding
-    dashboard/page.tsx    # /dashboard
-    logout/route.ts       # POST /logout
-  components/             # common UI (Button, Card, GoogleSignInButton, LogoutButton)
-  features/
-    onboarding/           # multi-step wizard + saveBudget server action
-    dashboard/            # BudgetSummary
-  lib/
-    supabase/             # browser + server + middleware clients (@supabase/ssr)
-    types.ts              # Profile, WeddingBudget
-    venue-pricing.ts      # tier prices in ILS
-  middleware.ts           # session refresh + /onboarding & /dashboard protection
-supabase/
-  schema.sql              # tables + RLS
-```
+1. Create a project at <https://supabase.com>.
+2. **Project Settings → API**: `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (same values as the old `NEXT_PUBLIC_*` vars).
+3. **Authentication → Providers → Email**: for the demo user `test@gmail.com` / `test1234`, turn **Confirm email** **OFF** (see [`supabase/seed.sql`](./supabase/seed.sql)).
+4. **Authentication → URL configuration**
+   - **Site URL**: your production client URL (e.g. `https://your-client.vercel.app`).
+   - **Redirect URLs** (add every environment you use):
+
+     ```
+     http://localhost:5173/auth/callback
+     https://<your-client-prod-domain>/auth/callback
+     ```
+
+5. **SQL Editor**: run [`supabase/seed.sql`](./supabase/seed.sql) once (idempotent). It creates tables, RLS, and the pre-confirmed demo user.
+
+The **server** deploy does not need Supabase env vars until you add server-side Supabase calls. Then add `SUPABASE_SERVICE_ROLE_KEY` only in the **server** Vercel project (never expose it to the client).
 
 ---
 
-## 7. Phase scope reminder
+## Deploy (Vercel + GitHub Actions)
 
-Phase 1 only. No vendors, marketplace, payments, admin, or save-the-date in this codebase yet. See [`PLAN.md`](./PLAN.md) and [`RULES.md`](./RULES.md).
+Use **two Vercel projects** on the **same repo**:
+
+| Vercel project | Root directory | Production branch (recommended) | Env vars |
+|----------------|----------------|----------------------------------|----------|
+| Wedding Hall **client** | `client` | `master-client` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
+| Wedding Hall **server** | `server` | `master-server` | (none required for health only) |
+
+### Option A — Vercel dashboard only
+
+1. Import the repo twice; set **Root Directory** to `client` and `server` respectively.
+2. Set each project’s **Production Branch** to `master-client` or `master-server` (or use one `main` branch and [Ignore Build Step](https://vercel.com/docs/concepts/projects/overview#ignored-build-step) — see workflows for path-based ideas).
+3. Add env vars on the **client** project. Redeploy after changing Supabase URLs.
+
+### Option B — GitHub Actions (included)
+
+Workflows in [`.github/workflows/`](./.github/workflows/):
+
+- **`deploy-client.yml`** — on push to **`master-client`**: lint, build client, deploy to Vercel (production).
+- **`deploy-server.yml`** — on push to **`master-server`**: lint, build server, deploy to Vercel (production).
+- **`ci.yml`** — on push/PR to **`main`** / **`master`**: lint + build both (no deploy).
+
+Configure repository **Secrets**:
+
+- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_CLIENT`, `VERCEL_PROJECT_ID_SERVER`
+- Optional for client build step in `deploy-client.yml`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (mirror production; Vercel still builds with project env if you rely on Vercel’s build).
+
+### Git branching (suggested)
+
+- Day-to-day: `main` (or `master`) with full monorepo; **`ci.yml`** keeps both packages healthy.
+- Releases: merge to **`master-client`** when the client should go to production; merge to **`master-server`** when the server should. Fast-forward or merge commits as you prefer.
+
+---
+
+## Phase scope
+
+Phase 1 only — see [`PLAN.md`](./PLAN.md). No marketplace, payments, or admin in this repo yet.
