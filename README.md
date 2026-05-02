@@ -82,23 +82,15 @@ Use **two Vercel projects** on the **same repo**:
 2. Set each project’s **Production Branch** to `master-client` or `master-server` (or use one `main` branch and [Ignore Build Step](https://vercel.com/docs/concepts/projects/overview#ignored-build-step) — see workflows for path-based ideas).
 3. Add env vars on the **client** project. Redeploy after changing Supabase URLs.
 
-### Option B — GitHub Actions (included)
+### CI
 
-Workflows in [`.github/workflows/`](./.github/workflows/):
+[`.github/workflows/ci.yml`](./.github/workflows/ci.yml) runs on push/PR to **`main`** / **`master`** — lint + build both packages, no deploy.
 
-- **`deploy-client.yml`** — on push to **`master-client`**: lint, build client, deploy to Vercel (production).
-- **`deploy-server.yml`** — on push to **`master-server`**: lint, build server, deploy to Vercel (production).
-- **`ci.yml`** — on push/PR to **`main`** / **`master`**: lint + build both (no deploy).
+### Git branching
 
-Configure repository **Secrets**:
-
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID_CLIENT`, `VERCEL_PROJECT_ID_SERVER`
-- Optional for client build step in `deploy-client.yml`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (mirror production; Vercel still builds with project env if you rely on Vercel’s build).
-
-### Git branching (suggested)
-
-- Day-to-day: `main` (or `master`) with full monorepo; **`ci.yml`** keeps both packages healthy.
-- Releases: merge to **`master-client`** when the client should go to production; merge to **`master-server`** when the server should. Fast-forward or merge commits as you prefer.
+- Day-to-day: `main`. CI keeps both packages healthy.
+- **Release client**: fast-forward or merge `main` → `master-client`. Vercel auto-deploys the **client** project.
+- **Release server**: fast-forward or merge `main` → `master-server`. Vercel auto-deploys the **server** project.
 
 ---
 

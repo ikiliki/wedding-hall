@@ -36,11 +36,9 @@ Set these on the **client** Vercel project and in `client/.env.local` locally.
 
 ## Git branches & CI
 
-- **`master-client`** — push triggers `.github/workflows/deploy-client.yml` (if secrets are set).
-- **`master-server`** — push triggers `.github/workflows/deploy-server.yml`.
-- **`main`** / **`master`** — `.github/workflows/ci.yml` runs lint + build for both packages (no deploy).
-
-If using **only** Vercel Git integration, set each Vercel project’s **Production Branch** to match (`master-client` / `master-server`) or use Ignored Build Step to skip unrelated apps.
+- **`master-client`** — push triggers Vercel auto-deploy of `wedding-hall-client` (Production Branch).
+- **`master-server`** — push triggers Vercel auto-deploy of `wedding-hall-server`.
+- **`main`** / **`master`** — `.github/workflows/ci.yml` runs lint + build (no deploy).
 
 ## Post-deploy smoke test
 
