@@ -1,24 +1,53 @@
 // CORS helpers. The browser app runs on a different origin (Vite dev,
-// or `wedding-hall-client.vercel.app` in production) than the API, so
-// every JSON route hands back the right access-control headers and
-// answers preflight `OPTIONS` requests.
+// or a vercel.app deploy in production) than the API, so every JSON
+// route hands back the right access-control headers and answers
+// preflight `OPTIONS` requests.
 
 import { NextResponse } from "next/server";
 
-// Allowed origins. Defaults cover local Vite dev + the docker-compose
-// client. In production set CLIENT_ORIGIN (comma-separated for multiple).
-function allowedOrigins(): string[] {
-  const fromEnv = (process.env.CLIENT_ORIGIN ?? "")
+// Hard-coded localhost defaults so `npm run dev:client` + docker-compose
+// always work without setup.
+const LOCAL_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:3000",
+];
+
+function envAllowedOrigins(): string[] {
+  return (process.env.CLIENT_ORIGIN ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  return [...fromEnv, "http://localhost:5173", "http://127.0.0.1:5173"];
+}
+
+// Vercel hands every preview deployment a fresh `*.vercel.app` URL, so
+// pinning `CLIENT_ORIGIN` to a single host means PR previews and
+// re-named projects silently 404 with a CORS error. Allowing any
+// vercel.app subdomain over HTTPS is safe here because:
+//   * every server route requires a Supabase JWT — an unauthenticated
+//     CORS request can read /api/health and that's it,
+//   * Supabase RLS still enforces row ownership downstream,
+//   * we never use cookies for auth (Authorization: Bearer only).
+function isAllowedVercelOrigin(origin: string): boolean {
+  try {
+    const u = new URL(origin);
+    return u.protocol === "https:" && u.hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
+function isAllowedOrigin(origin: string): boolean {
+  if (LOCAL_ORIGINS.includes(origin)) return true;
+  if (envAllowedOrigins().includes(origin)) return true;
+  if (isAllowedVercelOrigin(origin)) return true;
+  return false;
 }
 
 function pickOrigin(req: Request): string | null {
   const origin = req.headers.get("origin");
   if (!origin) return null;
-  return allowedOrigins().includes(origin) ? origin : null;
+  return isAllowedOrigin(origin) ? origin : null;
 }
 
 export function corsHeaders(req: Request): Record<string, string> {
