@@ -1,7 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/Button";
-import { ApiError, upsertProfile } from "@/shared/lib/api";
+import {
+  ApiError,
+  SERVER_URL_MISCONFIGURED,
+  upsertProfile,
+} from "@/shared/lib/api";
 import { createClient } from "@/shared/lib/supabase";
 import { getPostAuthPath } from "@/shared/lib/post-auth-path";
 import * as styles from "./EmailLoginForm.styles";
@@ -231,6 +235,14 @@ export function EmailLoginForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
+      {SERVER_URL_MISCONFIGURED && (
+        <div className={styles.configBanner} role="alert">
+          <strong>Setup needed:</strong> this build is missing
+          <code> VITE_SERVER_URL</code>. Set it on the Vercel client project
+          (e.g. <code>https://wedding-hall-server.vercel.app</code>) and
+          redeploy — until then, sign-in will fail.
+        </div>
+      )}
       <div className={styles.tabs} role="tablist" aria-label="Sign in or sign up">
         <button
           type="button"

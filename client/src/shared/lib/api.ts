@@ -14,9 +14,39 @@ import type {
 } from "@wedding-hall/shared";
 import { createClient } from "@/shared/lib/supabase";
 
+// Resolution order:
+//   1. `VITE_SERVER_URL` from the active env file (`.env.development` for
+//      `vite dev` / docker, `.env.production` for `vite build` / Vercel)
+//      or from the Vercel project setting (which overrides the env file).
+//   2. Mode-aware fallback so a stripped-env build still hits the right
+//      host (production -> the public Wedding Hall server, otherwise
+//      localhost). The warning below only fires when the fallback engages
+//      in production, which means somebody also deleted `.env.production`.
+const RAW_SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
+const PRODUCTION_FALLBACK = "https://wedding-hall-server.vercel.app";
+const DEVELOPMENT_FALLBACK = "http://localhost:3001";
+
+if (!RAW_SERVER_URL && import.meta.env.PROD) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[wedding-hall] VITE_SERVER_URL is not set in this client bundle. " +
+      "Falling back to the public Wedding Hall server " +
+      `(${PRODUCTION_FALLBACK}). Set VITE_SERVER_URL on the Vercel client ` +
+      "project — or commit it to client/.env.production — and redeploy.",
+  );
+}
+
 const SERVER_URL = (
-  import.meta.env.VITE_SERVER_URL ?? "http://localhost:3001"
+  RAW_SERVER_URL ??
+  (import.meta.env.PROD ? PRODUCTION_FALLBACK : DEVELOPMENT_FALLBACK)
 ).replace(/\/$/, "");
+
+// Kept for the LoginPage banner. It is now rare (we ship a default in
+// client/.env.production), but we still warn users when the env was
+// explicitly stripped so they don't silently talk to the wrong host.
+export const SERVER_URL_MISCONFIGURED =
+  !RAW_SERVER_URL && import.meta.env.PROD;
 
 export type ApiErrorKind = "unauthorized" | "tables_missing" | "validation" | "network" | "server";
 

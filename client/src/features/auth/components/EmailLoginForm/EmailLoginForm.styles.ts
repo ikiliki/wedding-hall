@@ -31,3 +31,6 @@ export const linkButton =
 
 export const success =
   "rounded-xl border border-bone/30 bg-bone/5 px-4 py-3 text-sm text-bone";
+
+export const configBanner =
+  "rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs leading-relaxed text-amber-200";
