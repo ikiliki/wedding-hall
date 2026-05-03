@@ -2,8 +2,9 @@
 --  Wedding Hall - one-shot Supabase setup
 --  Paste this entire file into the Supabase SQL Editor and click Run.
 --  Idempotent: safe to run multiple times.
---  Creates: profiles + wedding_budgets tables, RLS policies, and a
---  pre-confirmed demo user (test@gmail.com / test1234).
+--  Creates: profiles + wedding_budgets tables, RLS policies, a
+--  pre-confirmed demo user (test@gmail.com / test1234), and a staff admin
+--  account (admin@weddinghall.app / Admin!2026, profiles.is_admin = true).
 -- =================================================================
 
 -- ----------------------------------------------------------------
@@ -34,6 +35,9 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add column if not exists is_admin boolean not null default false;
 
 drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
@@ -239,8 +243,8 @@ begin
     now()
   );
 
-  insert into public.profiles (id, email, full_name)
-  values (v_user_id, 'test@gmail.com', 'Test User')
+  insert into public.profiles (id, email, full_name, is_admin)
+  values (v_user_id, 'test@gmail.com', 'Test User', false)
   on conflict (id) do nothing;
 
   raise notice '--- Wedding Hall setup complete ---';
@@ -249,9 +253,133 @@ begin
 end $$;
 
 -- ----------------------------------------------------------------
+-- Staff admin (`profiles.is_admin`). Idempotent.
+--   admin@weddinghall.app / Admin!2026
+-- ----------------------------------------------------------------
+do $$
+declare
+  v_user_id uuid;
+begin
+  select id into v_user_id from auth.users where email = 'admin@weddinghall.app';
+
+  if v_user_id is null then
+    v_user_id := gen_random_uuid();
+    insert into auth.users (
+      instance_id,
+      id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      confirmation_token,
+      email_change,
+      email_change_token_new,
+      recovery_token
+    ) values (
+      '00000000-0000-0000-0000-000000000000',
+      v_user_id,
+      'authenticated',
+      'authenticated',
+      'admin@weddinghall.app',
+      crypt('Admin!2026', gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Staff Admin"}'::jsonb,
+      now(),
+      now(),
+      '',
+      '',
+      '',
+      ''
+    );
+
+    insert into auth.identities (
+      id,
+      user_id,
+      identity_data,
+      provider,
+      provider_id,
+      last_sign_in_at,
+      created_at,
+      updated_at
+    ) values (
+      gen_random_uuid(),
+      v_user_id,
+      jsonb_build_object(
+        'sub', v_user_id::text,
+        'email', 'admin@weddinghall.app',
+        'email_verified', true,
+        'phone_verified', false
+      ),
+      'email',
+      v_user_id::text,
+      now(),
+      now(),
+      now()
+    );
+
+    raise notice 'Created staff admin admin@weddinghall.app (id %)', v_user_id;
+  else
+    update auth.users
+       set email_confirmed_at = coalesce(email_confirmed_at, now()),
+           encrypted_password = crypt('Admin!2026', gen_salt('bf')),
+           confirmation_token = '',
+           recovery_token     = '',
+           updated_at         = now()
+     where id = v_user_id;
+
+    insert into auth.identities (
+      id,
+      user_id,
+      identity_data,
+      provider,
+      provider_id,
+      last_sign_in_at,
+      created_at,
+      updated_at
+    )
+    select gen_random_uuid(),
+           v_user_id,
+           jsonb_build_object(
+             'sub', v_user_id::text,
+             'email', 'admin@weddinghall.app',
+             'email_verified', true,
+             'phone_verified', false
+           ),
+           'email',
+           v_user_id::text,
+           now(),
+           now(),
+           now()
+    where not exists (
+      select 1 from auth.identities
+      where user_id = v_user_id and provider = 'email'
+    );
+
+    raise notice 'Refreshed staff admin admin@weddinghall.app';
+  end if;
+
+  insert into public.profiles (id, email, full_name, is_admin)
+  values (v_user_id, 'admin@weddinghall.app', 'Staff Admin', true)
+  on conflict (id) do update set
+    email     = excluded.email,
+    full_name = excluded.full_name,
+    is_admin  = true;
+end $$;
+
+-- ----------------------------------------------------------------
 -- Verification (these results should appear in the editor result panel)
 -- ----------------------------------------------------------------
 select
   (select count(*) from public.profiles)         as profiles_rows,
   (select count(*) from public.wedding_budgets)  as wedding_budgets_rows,
-  (select id from auth.users where email = 'test@gmail.com') as test_user_id;
+  (select id from auth.users where email = 'test@gmail.com') as test_user_id,
+  (select id from auth.users where email = 'admin@weddinghall.app') as admin_user_id,
+  (select is_admin from public.profiles p
+     join auth.users u on u.id = p.id
+    where u.email = 'admin@weddinghall.app') as admin_profile_flag;

@@ -31,6 +31,8 @@ export type ValidatedBudget = {
   venue_name: string | null;
   estimated_total: number;
   selections: BudgetSelections | null;
+  /** Present only when the client sent `weddingDate` (including null to clear). */
+  wedding_date?: string | null;
 };
 
 const VENUE_PRICE_TYPES: ReadonlyArray<VenuePriceType> = [
@@ -39,6 +41,32 @@ const VENUE_PRICE_TYPES: ReadonlyArray<VenuePriceType> = [
   "premium",
   "custom",
 ];
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseWeddingDateField(
+  raw: Partial<SaveBudgetPayload>,
+  errors: ValidationError[],
+): string | null | undefined {
+  if (!Object.prototype.hasOwnProperty.call(raw, "weddingDate")) {
+    return undefined;
+  }
+  const w = raw.weddingDate;
+  if (w === null || w === "") return null;
+  if (typeof w !== "string" || !ISO_DATE.test(w)) {
+    errors.push({
+      field: "weddingDate",
+      message: "Must be an ISO date string YYYY-MM-DD or null/empty to clear.",
+    });
+    return undefined;
+  }
+  const t = Date.parse(`${w}T12:00:00Z`);
+  if (Number.isNaN(t)) {
+    errors.push({ field: "weddingDate", message: "Invalid calendar date." });
+    return undefined;
+  }
+  return w;
+}
 
 export type ValidationError = { field: string; message: string };
 
@@ -222,6 +250,8 @@ export function validateBudgetPayload(
 
   const selections = sanitizeSelections(raw.selections);
 
+  const weddingDateResult = parseWeddingDateField(raw, errors);
+
   if (errors.length > 0 || guestCount === null) {
     return { ok: false, errors };
   }
@@ -239,22 +269,28 @@ export function validateBudgetPayload(
     if (estimated_total === 0) estimated_total = venueLineFromTier;
   }
 
-  return {
-    ok: true,
-    value: {
-      user_id: userId,
-      couple_name_1: coupleName1,
-      couple_name_2: coupleName2,
-      preferred_day: preferredDay,
-      guest_count: guestCount,
-      guest_count_min: guestCountMin,
-      guest_count_max: guestCountMax,
-      wedding_type: weddingType,
-      venue_price_type: raw.venuePriceType as VenuePriceType,
-      venue_price_per_guest: venuePricePerGuest,
-      venue_name: venueName,
-      estimated_total,
-      selections,
-    },
+  const base: ValidatedBudget = {
+    user_id: userId,
+    couple_name_1: coupleName1,
+    couple_name_2: coupleName2,
+    preferred_day: preferredDay,
+    guest_count: guestCount,
+    guest_count_min: guestCountMin,
+    guest_count_max: guestCountMax,
+    wedding_type: weddingType,
+    venue_price_type: raw.venuePriceType as VenuePriceType,
+    venue_price_per_guest: venuePricePerGuest,
+    venue_name: venueName,
+    estimated_total,
+    selections,
   };
+
+  if (weddingDateResult !== undefined) {
+    return {
+      ok: true,
+      value: { ...base, wedding_date: weddingDateResult },
+    };
+  }
+
+  return { ok: true, value: base };
 }

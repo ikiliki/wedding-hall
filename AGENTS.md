@@ -6,7 +6,7 @@ Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor
 
 **Wedding Hall** — wedding-budget app in a **monorepo**:
 
-- **`client/`** — Vite + React + TypeScript + Tailwind. Auth (`supabase.auth.*`) runs in the browser with the Supabase anon key. **All data calls go through the server** via `client/src/shared/lib/api.ts`.
+- **`client/`** — Vite + React + TypeScript + global CSS (`client/src/styles/style.css`, `wh-*` classes). Auth (`supabase.auth.*`) runs in the browser with the Supabase anon key. **All data calls go through the server** via `client/src/shared/lib/api.ts`.
 - **`server/`** — **Next.js 15** data gateway: `/api/health`, `/api/openapi.json`, `/docs`, `/api/profiles`, `/api/budget`. Uses the Supabase **anon** key + the calling user's forwarded JWT — RLS still enforces ownership. Do not add the service role key here.
 - **`packages/shared/`** — `@wedding-hall/shared`. Cross-package types, venue tier prices, **the budget catalog (every wizard category + tier)**, and the pricing function used by both client (preview) and server (recompute). Single source.
 - **`supabase/`** — SQL: `schema.sql`, `seed.sql` (idempotent). Includes the `handle_new_auth_user` trigger that auto-provisions a `public.profiles` row on every signup.
@@ -28,7 +28,15 @@ Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor
 ## Conventions
 
 - **Client feature layout**: `client/src/features/<feature>/components/`, `.../pages/`, optional `.../lib/`. Shared: `client/src/shared/components/`, `client/src/shared/lib/`.
-- **Colocate styles**: each component folder has `index.tsx` + `<Name>.styles.ts`. Storybook is planned — not required until it is added.
+- **Colocate styles**: each component folder has `index.tsx` + `<Name>.styles.ts`. The `.styles.ts` file exports `wh-*` class-name string constants only; the actual CSS lives in `client/src/styles/style.css` (base + tokens) or `client/src/styles/stitch-overrides.css` (active wizard/dashboard theme). No inline `style=` for layout, no `<style>` tags inside components, no Tailwind / no utility-class soup. **Storybook**: co-located `<Name>.stories.tsx`; run `npm run storybook -w wedding-hall-client` (or `npm run storybook` from repo root). The Storybook vite config aliases `@/shared/lib/supabase` to `src/storybook/mocks/supabase-client.ts`; MSW serves `/api/budget` and `/api/profiles` against `http://localhost:3001` — no gateway or real Supabase project required for UI work.
+- **Mobile-first invariants** (binding — see [`.claude-rules/skills/mobile-responsive-css/SKILL.md`](./.claude-rules/skills/mobile-responsive-css/SKILL.md) for the full skill):
+  - Test every wizard step at **320 × 568** (iPhone SE) and **360 × 640**. No horizontal scroll, ever.
+  - Containers use `width: 100%; max-inline-size: min(<n>rem, 100%)`, never a bare `max-width: <n>rem`.
+  - Flex/grid children that hold text or inputs need `min-width: 0`. Pair with `overflow-wrap: anywhere` for long unbreakable strings (Hebrew runs, URLs).
+  - Fullscreen containers use `100dvh` with `100vh` as fallback (iOS Safari address-bar fix).
+  - Popovers / tooltips / dropdowns clamp width to `min(<cap>, calc(100vw - 2rem))`.
+  - Default rules are mobile; add desktop with `@media (min-width: 640|768|1024|1280px)`. Avoid `@media (max-width: 639px)` patches that paper over a desktop-first rule.
+  - `box-sizing: border-box` and the media-element reset are global in `style.css` — don't redeclare them locally.
 - **Imports**: `@/*` → `client/src/*` (client) or `server/src/*` (server). Cross-package types: `@wedding-hall/shared`.
 - **Money**: `formatILS()` from `@wedding-hall/shared` (re-exported as `client/src/shared/lib/venue-pricing.ts`). Tier numbers only in `packages/shared/src/venue-pricing.ts`.
 - **Data IO**: client uses `client/src/shared/lib/api.ts` (`fetchBudget`, `saveBudget`, `upsertProfile`). Never call `supabase.from(...)` in the client.

@@ -17,6 +17,8 @@
 --   * Backfill profile rows for any existing orphaned auth.users
 --   * Demo     test@gmail.com / test1234         (basic, no budget)
 --   * Demo     demo@weddinghall.app / Demo!2026  (full mock budget)
+--   * Staff    admin@weddinghall.app / Admin!2026 (`profiles.is_admin`,
+--                full mock budget)
 --   * Repair   omri96david@gmail.com  (confirms email + ensures
 --                profile + clears stuck tokens; password unchanged
 --                unless you uncomment the marked block below)
@@ -47,6 +49,9 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add column if not exists is_admin boolean not null default false;
 
 drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
@@ -144,6 +149,9 @@ alter table public.wedding_budgets
   add column if not exists selections jsonb;
 
 alter table public.wedding_budgets
+  add column if not exists wedding_date date;
+
+alter table public.wedding_budgets
   drop constraint if exists wedding_budgets_user_id_key;
 alter table public.wedding_budgets
   add constraint wedding_budgets_user_id_key unique (user_id);
@@ -207,8 +215,8 @@ begin
                          'email_verified', true, 'phone_verified', false),
       'email', v_user_id::text, now(), now(), now()
     );
-    insert into public.profiles (id, email, full_name)
-    values (v_user_id, 'test@gmail.com', 'Test User')
+    insert into public.profiles (id, email, full_name, is_admin)
+    values (v_user_id, 'test@gmail.com', 'Test User', false)
     on conflict (id) do nothing;
     raise notice 'Created test@gmail.com (id %)', v_user_id;
   end if;
@@ -361,10 +369,12 @@ begin
      where id = v_user_id;
   end if;
 
-  insert into public.profiles (id, email, full_name)
-  values (v_user_id, 'demo@weddinghall.app', 'Maya Demo')
+  insert into public.profiles (id, email, full_name, is_admin)
+  values (v_user_id, 'demo@weddinghall.app', 'Maya Demo', false)
   on conflict (id) do update
-    set email = excluded.email, full_name = excluded.full_name;
+    set email     = excluded.email,
+        full_name = excluded.full_name,
+        is_admin  = false;
 
   v_selections := jsonb_build_object(
     'weddingTypeKind',   'hall',
@@ -431,6 +441,138 @@ begin
 end $$;
 
 -- ================================================================
+-- 4) Staff admin (`profiles.is_admin`) + mock budget
+--    admin@weddinghall.app / Admin!2026
+-- ================================================================
+do $$
+declare
+  v_user_id uuid;
+  v_selections jsonb;
+  v_total int := 191400;
+begin
+  select id into v_user_id from auth.users where email = 'admin@weddinghall.app';
+
+  if v_user_id is null then
+    v_user_id := gen_random_uuid();
+    insert into auth.users (
+      instance_id, id, aud, role,
+      email, encrypted_password, email_confirmed_at,
+      raw_app_meta_data, raw_user_meta_data,
+      created_at, updated_at,
+      confirmation_token, email_change, email_change_token_new, recovery_token
+    ) values (
+      '00000000-0000-0000-0000-000000000000',
+      v_user_id, 'authenticated', 'authenticated',
+      'admin@weddinghall.app',
+      crypt('Admin!2026', gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"full_name":"Staff Admin"}'::jsonb,
+      now(), now(), '', '', '', ''
+    );
+    insert into auth.identities (
+      id, user_id, identity_data, provider, provider_id,
+      last_sign_in_at, created_at, updated_at
+    ) values (
+      gen_random_uuid(), v_user_id,
+      jsonb_build_object('sub', v_user_id::text, 'email', 'admin@weddinghall.app',
+                         'email_verified', true, 'phone_verified', false),
+      'email', v_user_id::text, now(), now(), now()
+    );
+  else
+    update auth.users
+       set email_confirmed_at = coalesce(email_confirmed_at, now()),
+           encrypted_password = crypt('Admin!2026', gen_salt('bf')),
+           confirmation_token = '',
+           recovery_token     = '',
+           updated_at         = now()
+     where id = v_user_id;
+
+    insert into auth.identities (
+      id, user_id, identity_data, provider, provider_id,
+      last_sign_in_at, created_at, updated_at
+    )
+    select gen_random_uuid(), v_user_id,
+           jsonb_build_object('sub', v_user_id::text, 'email', 'admin@weddinghall.app',
+                              'email_verified', true, 'phone_verified', false),
+           'email', v_user_id::text, now(), now(), now()
+    where not exists (
+      select 1 from auth.identities
+      where user_id = v_user_id and provider = 'email'
+    );
+  end if;
+
+  insert into public.profiles (id, email, full_name, is_admin)
+  values (v_user_id, 'admin@weddinghall.app', 'Staff Admin', true)
+  on conflict (id) do update set
+    email     = excluded.email,
+    full_name = excluded.full_name,
+    is_admin  = true;
+
+  v_selections := jsonb_build_object(
+    'weddingTypeKind',   'hall',
+    'continuedExtended', true,
+    'selections', jsonb_build_object(
+      'venue',        jsonb_build_object('kind', 'tier',         'optionId', 'average'),
+      'food_upgrade', jsonb_build_object('kind', 'yes_no',       'optionId', 'yes'),
+      'bar',          jsonb_build_object('kind', 'tier',         'optionId', 'premium'),
+      'dj',           jsonb_build_object('kind', 'tier',         'optionId', 'average'),
+      'photo',        jsonb_build_object('kind', 'tier',         'optionId', 'average'),
+      'flowers',      jsonb_build_object('kind', 'multi_tier',
+                                         'groupId', 'external',
+                                         'optionId', 'ext_30'),
+      'planner',      jsonb_build_object('kind', 'tier',         'optionId', 'average'),
+      'addons',       jsonb_build_object('kind', 'multi_select',
+                                         'itemIds', jsonb_build_array(
+                                           'photo_booth', 'guest_gifts', 'candy_bar')),
+      'bride',        jsonb_build_object('kind', 'tier',         'optionId', 'rental'),
+      'groom',        jsonb_build_object('kind', 'tier',         'optionId', 'average'),
+      'villa',        jsonb_build_object('kind', 'tier',         'optionId', 'skip'),
+      'transport',    jsonb_build_object('kind', 'tier',         'optionId', 'small'),
+      'car_rental',   jsonb_build_object('kind', 'tier',         'optionId', 'average'),
+      'makeup',       jsonb_build_object('kind', 'tier',         'optionId', 'average'),
+      'hidden_costs', jsonb_build_object('kind', 'multi_select',
+                                         'itemIds', jsonb_build_array(
+                                           'tips', 'stationery', 'misc'))
+    ),
+    'actuals', jsonb_build_object(
+      'venue', 88000,
+      'dj',     8800,
+      'photo', 12800
+    )
+  );
+
+  insert into public.wedding_budgets (
+    user_id,
+    couple_name_1, couple_name_2,
+    preferred_day, guest_count, guest_count_min, guest_count_max,
+    wedding_type, venue_price_type, venue_price_per_guest, venue_name,
+    estimated_total, selections
+  ) values (
+    v_user_id,
+    'Leah', 'Amir',
+    'wed', 200, 180, 220,
+    'hall', 'average', 400, 'Grand Pavilion',
+    v_total, v_selections
+  )
+  on conflict (user_id) do update set
+    couple_name_1         = excluded.couple_name_1,
+    couple_name_2         = excluded.couple_name_2,
+    preferred_day         = excluded.preferred_day,
+    guest_count           = excluded.guest_count,
+    guest_count_min       = excluded.guest_count_min,
+    guest_count_max       = excluded.guest_count_max,
+    wedding_type          = excluded.wedding_type,
+    venue_price_type      = excluded.venue_price_type,
+    venue_price_per_guest = excluded.venue_price_per_guest,
+    venue_name            = excluded.venue_name,
+    estimated_total       = excluded.estimated_total,
+    selections            = excluded.selections;
+
+  raise notice '--- Staff admin ready: admin@weddinghall.app / Admin!2026 ---';
+end $$;
+
+-- ================================================================
 -- Verification (results appear in the editor result panel)
 -- ================================================================
 select
@@ -439,10 +581,16 @@ select
   (select count(*) from auth.identities i
      where i.user_id = u.id and i.provider = 'email')          as email_identities,
   (select count(*) from public.profiles p where p.id = u.id)   as profiles_rows,
+  coalesce((select p.is_admin from public.profiles p where p.id = u.id), false) as is_admin,
   (select count(*) from public.wedding_budgets w
      where w.user_id = u.id)                                   as budgets_rows
 from auth.users u
-where email in ('test@gmail.com', 'omri96david@gmail.com', 'demo@weddinghall.app')
+where email in (
+  'test@gmail.com',
+  'omri96david@gmail.com',
+  'demo@weddinghall.app',
+  'admin@weddinghall.app'
+)
 order by email;
 
 select

@@ -7,6 +7,8 @@
     "dev:server": "npm run dev -w wedding-hall-server",
     "build": "npm run build -w wedding-hall-client && npm run build -w wedding-hall-server",
     "lint": "npm run lint -w wedding-hall-client && npm run lint -w wedding-hall-server",
+    "storybook": "npm run storybook -w wedding-hall-client",
+    "build-storybook": "npm run build-storybook -w wedding-hall-client",
     "env:local": "node scripts/setup-env.mjs --local",
     "env:cloud": "node scripts/setup-env.mjs --from-supabase",
     "env:push-vercel": "node scripts/setup-env.mjs --push-vercel"

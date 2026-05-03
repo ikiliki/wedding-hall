@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ApiError, fetchBudget } from "@/shared/lib/api";
+import { safeWizardReturnPath } from "@/shared/lib/safe-return-path";
 
 // Decide where to send the user right after auth succeeds:
+//   - explicit returnTo (sanitized wizard path) when provided
 //   - /login     if there's no session
 //   - /dashboard if they already have a budget on file
 //   - /start     otherwise (the new multi-step wizard)
@@ -11,7 +13,11 @@ import { ApiError, fetchBudget } from "@/shared/lib/api";
 // directly anymore.
 export async function getPostAuthPath(
   supabase: SupabaseClient,
-): Promise<"/dashboard" | "/start" | "/login"> {
+  returnToRaw?: string | null,
+): Promise<string> {
+  const explicit = safeWizardReturnPath(returnToRaw ?? undefined);
+  if (explicit) return explicit;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

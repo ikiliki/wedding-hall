@@ -1,62 +1,69 @@
-export const headerCard =
-  "relative overflow-hidden rounded-3xl border border-line bg-surfaceRaised/60 p-8 shadow-luxe sm:p-12";
+export const welcomeBlock = "wh-dash-bento-welcome";
 
-export const headerEyebrow =
-  "text-[10px] uppercase tracking-luxe text-muted";
+export const welcomeTitle = "wh-dash-bento-welcome-title";
 
-export const headerCouple =
-  "mt-4 font-serif text-4xl leading-[1.1] sm:text-6xl";
+export const welcomeSub = "wh-dash-bento-welcome-sub";
 
-export const amp =
-  "italic text-bone/60";
+export const inlineLinks = "wh-dash-bento-inline-links";
 
-export const headerMeta =
-  "mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-muted";
+export const mutedLink = "wh-dash-bento-muted-link";
 
-export const headerProgressRow =
-  "mt-10 flex items-center gap-6";
+export const grid = "wh-dash-bento-grid";
 
-export const totalsRow =
-  "grid grid-cols-1 gap-6 lg:grid-cols-[420px_minmax(0,1fr)]";
+export const bentoCard = "wh-dash-bento-card";
 
-export const totalCard =
-  "rounded-3xl border border-line bg-surfaceRaised/60 p-8 shadow-luxe";
+export const countdownDeco = "wh-dash-bento-countdown-decko";
 
-export const totalEyebrow =
-  "text-[10px] uppercase tracking-luxe text-muted";
+export const countdownEyebrow = "wh-dash-bento-count-eyebrow";
 
-export const totalAmount =
-  "mt-3 font-serif text-5xl tabular-nums sm:text-6xl";
+export const countdownRow = "wh-dash-bento-count-row";
 
-export const totalSub =
-  "mt-3 text-xs text-muted";
+export const countdownDays = "wh-dash-bento-count-days";
 
-export const totalCta =
-  "mt-8 flex flex-wrap items-center gap-6";
+export const countdownUnit = "wh-dash-bento-count-unit";
 
-export const totalCtaLink =
-  "text-[11px] uppercase tracking-luxe text-bone underline-offset-4 hover:underline";
+export const countdownMetaLine = "wh-dash-bento-count-meta";
 
-export const totalCtaLinkMuted =
-  "text-[11px] uppercase tracking-luxe text-muted underline-offset-4 hover:text-bone";
+export const countdownEmptyHint = "wh-dash-bento-count-empty";
 
-export const tilesCol =
-  "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2";
+export const kpiLabel = "wh-dash-bento-kpi-label";
 
-export const tile =
-  "group flex h-full flex-col justify-between rounded-3xl border border-line bg-surfaceRaised/40 p-6 transition hover:border-bone/60 hover:bg-surfaceRaised/80 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 aria-disabled:hover:border-line aria-disabled:hover:bg-surfaceRaised/40";
+export const kpiValueRow = "wh-dash-bento-kpi-value-row";
 
-export const tileEyebrow =
-  "text-[10px] uppercase tracking-luxe text-muted";
+export const kpiValue = "wh-dash-bento-kpi-value";
 
-export const tileTitle =
-  "mt-4 font-serif text-2xl";
+export const kpiTrack = "wh-dash-bento-kpi-track";
 
-export const tileBody =
-  "mt-3 text-xs leading-relaxed text-muted";
+export const kpiFill = "wh-dash-bento-kpi-fill";
 
-export const tileCta =
-  "mt-6 text-[11px] uppercase tracking-luxe text-bone underline-offset-4 group-hover:underline";
+export const kpiMoney = "wh-dash-bento-kpi-money";
 
-export const tileCtaMuted =
-  "mt-6 text-[11px] uppercase tracking-luxe text-muted";
+export const quickGridWrap = "wh-dash-bento-quick-wrap";
+
+export const quickGrid = "wh-dash-bento-quick-grid";
+
+export const quickBtn = "wh-dash-bento-quick-btn";
+
+export const quickPrimary = "wh-dash-bento-quick-primary";
+
+export const quickSoon = "wh-dash-bento-quick-soon";
+
+export const quickSoonBadge = "wh-dash-bento-quick-soon-badge";
+
+export const breakdown = "wh-dash-bento-breakdown";
+
+export const breakdownHead = "wh-dash-bento-break-head";
+
+export const breakdownRows = "wh-dash-bento-break-rows";
+
+export const breakdownRow = "wh-dash-bento-break-row";
+
+export const breakdownIcWrap = "wh-dash-bento-break-icon";
+
+export const heroWide = "wh-dash-bento-hero";
+
+export const heroImg = "wh-dash-bento-hero-img";
+
+export const heroGrad = "wh-dash-bento-hero-grad";
+
+export const amp = "wh-dash-muted-amp";

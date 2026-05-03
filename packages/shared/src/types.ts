@@ -9,6 +9,9 @@ export type Profile = {
   id: string;
   email: string | null;
   full_name: string | null;
+  // Phase 1+: marks the row's owner as a Wedding Hall admin (manually
+  // flipped via SQL). Used by the client to gate the `/admin` route.
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -47,6 +50,8 @@ export type WeddingBudget = {
   venue_name: string | null;
   estimated_total: number;
   selections: BudgetSelections | null;
+  /** Optional calendar date (`YYYY-MM-DD`) for countdown on the dashboard. */
+  wedding_date?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -66,6 +71,8 @@ export type SaveBudgetPayload = {
   customPricePerGuest?: number;
   venueName?: string;
   selections?: BudgetSelections;
+  /** `YYYY-MM-DD`, or null to clear. Omit to leave the stored value unchanged. */
+  weddingDate?: string | null;
 };
 
 // Wire-format payload for `POST /api/profiles`.

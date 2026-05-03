@@ -22,44 +22,57 @@ export function StepCouple() {
 
   return (
     <WizardLayout
+      currentStepId="couple"
       stepNumber={stepNumber("couple")}
       totalSteps={TOTAL_STEPS}
-      eyebrow="Step 1 — Who are you?"
-      title="Tell us your names."
-      subtitle="They'll show on your wedding home and budget."
+      title="איך קוראים לכם?"
+      subtitle="השמות יופיעו בדף הבית ובתקציב."
       footer={
         <>
-          <Button type="button" variant="ghost" onClick={() => navigate("/")}>
-            Back
-          </Button>
-          <Button
+          <div className="wh-wizard-stitch-footer-actions">
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              onClick={handleNext}
+              disabled={!valid}
+              className="wh-wizard-stitch-next"
+            >
+              המשך
+              <span className="material-symbols-outlined" aria-hidden>
+                arrow_back
+              </span>
+            </Button>
+          </div>
+          <button
             type="button"
-            variant="primary"
-            size="lg"
-            onClick={handleNext}
-            disabled={!valid}
+            className="wh-wizard-stitch-back"
+            onClick={() => navigate("/")}
           >
-            Continue
-          </Button>
+            <span className="material-symbols-outlined" aria-hidden>
+              arrow_forward
+            </span>
+            חזור
+          </button>
         </>
       }
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="wh-form-grid-2">
         <Field
           id="name1"
-          label="Partner 1"
+          label="בן/בת זוג 1"
           autoComplete="given-name"
           value={name1}
           onChange={(e) => setName1(e.target.value)}
-          placeholder="e.g. Maya"
+          placeholder="למשל נועה"
         />
         <Field
           id="name2"
-          label="Partner 2"
-          autoComplete="given-name"
+          label="בן/בת זוג 2"
+          autoComplete="off"
           value={name2}
           onChange={(e) => setName2(e.target.value)}
-          placeholder="e.g. Yotam"
+          placeholder="למשל גיא"
         />
       </div>
     </WizardLayout>

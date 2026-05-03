@@ -69,8 +69,8 @@ export function AuthCallbackPage() {
   }, [searchParams, navigate]);
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-6 text-sm text-muted">
-      Signing you in…
+    <main className="wh-page-center-muted">
+      מתחברים…
     </main>
   );
 }

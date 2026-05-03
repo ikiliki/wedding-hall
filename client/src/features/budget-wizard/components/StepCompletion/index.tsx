@@ -23,7 +23,7 @@ export function StepCompletion() {
       try {
         await saveServer();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not save.");
+        setError(err instanceof Error ? err.message : "לא ניתן לשמור.");
       } finally {
         setSaving(false);
       }
@@ -32,40 +32,44 @@ export function StepCompletion() {
 
   return (
     <WizardLayout
+      currentStepId="completion"
       stepNumber={stepNumber("completion")}
       totalSteps={TOTAL_STEPS}
-      eyebrow="Done"
-      title="You've built your budget."
-      subtitle="Beautiful — that's the whole estimate. Open the budget view to see line-by-line breakdowns and to fill in your real prices once you start booking."
+      title="בניתם את האומדן."
+      subtitle="זה סיכום התקציב המלא. במסך התקציב תראו פירוט לפי קטגוריות ותוכלו למלא מחירים אמיתיים ברגע שסוגרים עם ספקים."
       footer={
-        <>
+        <div className="wh-wizard-stitch-footer-actions">
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            className="wh-wizard-stitch-next"
+            onClick={() => navigate("/budget")}
+            disabled={saving}
+          >
+            {saving ? "שומרים…" : "מעבר לתקציב"}
+            <span className="material-symbols-outlined" aria-hidden>
+              arrow_back
+            </span>
+          </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={() => navigate("/dashboard")}
           >
-            Home
+            דף הבית
           </Button>
-          <Button
-            type="button"
-            variant="primary"
-            size="lg"
-            onClick={() => navigate("/budget")}
-            disabled={saving}
-          >
-            {saving ? "Saving…" : "View budget"}
-          </Button>
-        </>
+        </div>
       }
       errorMessage={error}
     >
-      <div className="rounded-3xl border border-line bg-surfaceRaised/60 p-8 shadow-luxe">
-        <p className="text-[10px] uppercase tracking-luxe text-muted">
-          Total estimated budget
-        </p>
-        <p className="mt-3 font-serif text-6xl tabular-nums">{formatILS(total)}</p>
-        <p className="mt-3 text-sm text-muted">
-          Across {totalLines.length} categor{totalLines.length === 1 ? "y" : "ies"}.
+      <div className="wh-wizard-stat-card">
+        <p className="wh-wizard-stat-eyebrow">סה״כ אומדן</p>
+        <p className="wh-wizard-stat-sum-xl">{formatILS(total)}</p>
+        <p className="wh-wizard-stat-sub">
+          {totalLines.length === 1
+            ? "קטגוריה אחת נכללה באומדן."
+            : `${totalLines.length} קטגוריות נכללו באומדן.`}
         </p>
       </div>
     </WizardLayout>

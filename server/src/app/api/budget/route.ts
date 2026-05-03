@@ -57,17 +57,25 @@ export async function PUT(request: Request) {
     );
   }
 
-  // Backwards compat with prod DBs that pre-date the Phase 2 columns
-  // (`guest_count_min`, `guest_count_max`, `selections`). PostgREST replies
+  // Backwards compat with prod DBs that pre-date optional columns
+  // (`guest_count_min`, `guest_count_max`, `selections`, `wedding_date`). PostgREST replies
   // PGRST204 ("Could not find the X column ... in the schema cache") when
-  // we send a column it doesn't know about. Strip empty Phase 2 fields,
+  // we send a column it doesn't know about. Strip empty optional fields,
   // and if PGRST204 still fires, retry without them entirely so the
   // legacy onboarding always succeeds.
-  const PHASE_2_KEYS = ["guest_count_min", "guest_count_max", "selections"] as const;
-  type Phase2Key = (typeof PHASE_2_KEYS)[number];
+  const OPTIONAL_SCHEMA_KEYS = [
+    "guest_count_min",
+    "guest_count_max",
+    "selections",
+    "wedding_date",
+  ] as const;
+  type OptionalSchemaKey = (typeof OPTIONAL_SCHEMA_KEYS)[number];
 
   const fullRow: Record<string, unknown> = { ...result.value };
-  for (const key of PHASE_2_KEYS) {
+  for (const key of OPTIONAL_SCHEMA_KEYS) {
+    if (key === "wedding_date") {
+      continue;
+    }
     if (fullRow[key] == null) delete fullRow[key];
   }
 
@@ -81,7 +89,7 @@ export async function PUT(request: Request) {
     // Either PostgREST schema cache or Postgres itself reports an unknown
     // column — fall back to the legacy column set.
     const legacyRow = { ...fullRow };
-    for (const key of PHASE_2_KEYS as readonly Phase2Key[]) {
+    for (const key of OPTIONAL_SCHEMA_KEYS as readonly OptionalSchemaKey[]) {
       delete legacyRow[key];
     }
     console.warn(

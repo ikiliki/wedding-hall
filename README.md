@@ -22,7 +22,7 @@ Monorepo for a minimal black-and-white wedding-budget **MVP**: a **React (Vite)*
 
 | Path | Role |
 |------|------|
-| [`client/`](./client/) | Vite + React + TypeScript + Tailwind. Feature folders under `client/src/features/`. Auth in the browser; data through `client/src/shared/lib/api.ts`. |
+| [`client/`](./client/) | Vite + React + TypeScript + global CSS (`wh-*` in `src/styles/style.css`). Feature folders under `client/src/features/`. Auth in the browser; data through `client/src/shared/lib/api.ts`. |
 | [`server/`](./server/) | Next.js 15 data gateway. `/api/health`, `/api/openapi.json`, `/docs`, `/api/profiles`, `/api/budget`. |
 | [`packages/shared/`](./packages/shared/) | `@wedding-hall/shared` — cross-package types and venue tier prices. |
 | [`supabase/`](./supabase/) | `schema.sql`, `seed.sql` — single Supabase project for DB + Auth. |

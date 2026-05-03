@@ -1,10 +1,7 @@
-export const card =
-  "rounded-2xl border border-line bg-black/40 p-6 backdrop-blur-sm";
+export const card = "wh-card-base";
 
-export const interactive =
-  "cursor-pointer transition hover:border-bone/60 hover:bg-bone/5";
+export const interactive = "wh-card-interactive";
 
-export const selected = "border-bone bg-bone/10";
+export const selected = "wh-card-selected";
 
-export const disabled =
-  "cursor-not-allowed opacity-40 hover:border-line hover:bg-black/40";
+export const disabled = "wh-card-disabled";

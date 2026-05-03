@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/Button";
 import { WizardLayout } from "@/shared/components/WizardLayout";
-import { formatILS } from "@/shared/lib/venue-pricing";
 import { useWizard } from "@/features/budget-wizard/state/use-wizard";
 import { TOTAL_STEPS, stepNumber, urlFor } from "@/features/budget-wizard/state/steps";
 
@@ -15,12 +14,12 @@ export function StepContinueGate() {
   async function persistAndGo(continued: boolean) {
     setError(null);
     setSaving(true);
-    setContinuedExtended(continued);
     try {
-      await saveServer();
+      await saveServer({ continuedExtended: continued });
+      setContinuedExtended(continued);
       navigate(continued ? urlFor("bride") : "/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save your budget.");
+      setError(err instanceof Error ? err.message : "לא ניתן לשמור את התקציב כעת.");
     } finally {
       setSaving(false);
     }
@@ -28,30 +27,49 @@ export function StepContinueGate() {
 
   return (
     <WizardLayout
+      currentStepId="continue_gate"
       stepNumber={stepNumber("continue_gate")}
       totalSteps={TOTAL_STEPS}
-      eyebrow="Halfway"
-      title="The basics are in."
-      subtitle="You've got a venue-side estimate. Want to keep going with the full breakdown — bride, groom, transport, hidden costs — or call it for now and look at the dashboard?"
+      title="הבסיס אצלנו במערכת."
+      subtitle="יש לכם אומדן צד אולם. רוצים להמשיך לפירוט המלא — כלה, חתן, הסעות, עלויות נסתרות — או לעצור כאן ולעבור ללוח הבקרה?"
       footer={
         <>
-          <Button
+          <div className="wh-wizard-stitch-footer-actions">
+            <div className="wh-wizard-footer-actions-stack">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => persistAndGo(false)}
+                disabled={saving}
+              >
+                {saving ? "שומרים…" : "שמירה ומעבר ללוח הבקרה"}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="lg"
+                className="wh-wizard-stitch-next"
+                onClick={() => persistAndGo(true)}
+                disabled={saving}
+              >
+                {saving ? "שומרים…" : "להמשיך לבנות"}
+                <span className="material-symbols-outlined" aria-hidden>
+                  arrow_back
+                </span>
+              </Button>
+            </div>
+          </div>
+          <button
             type="button"
-            variant="secondary"
-            onClick={() => persistAndGo(false)}
+            className="wh-wizard-stitch-back"
+            onClick={() => navigate(urlFor("addons"))}
             disabled={saving}
           >
-            {saving ? "Saving…" : "Save & go to dashboard"}
-          </Button>
-          <Button
-            type="button"
-            variant="primary"
-            size="lg"
-            onClick={() => persistAndGo(true)}
-            disabled={saving}
-          >
-            {saving ? "Saving…" : "Keep building"}
-          </Button>
+            <span className="material-symbols-outlined" aria-hidden>
+              arrow_forward
+            </span>
+            חזור
+          </button>
         </>
       }
       errorMessage={error}
@@ -59,15 +77,10 @@ export function StepContinueGate() {
       runningTotal={total}
       summaryLines={totalLines}
     >
-      <div className="rounded-3xl border border-line bg-surfaceRaised/60 p-8 shadow-luxe">
-        <p className="text-[10px] uppercase tracking-luxe text-muted">
-          Estimated so far
-        </p>
-        <p className="mt-3 font-serif text-5xl tabular-nums">{formatILS(total)}</p>
-        <p className="mt-3 text-sm text-muted">
-          Based on the {totalLines.length} categor{totalLines.length === 1 ? "y" : "ies"} you've answered.
-        </p>
-      </div>
+      <p className="wh-wizard-continue-gate-hint">
+        האומדן המעודכן מוצג למעלה. בשלב הבא הנתונים נשמרים בשרת — בחרו אם
+        להרחיב את השאלון או לעבור ללוח הבקרה.
+      </p>
     </WizardLayout>
   );
 }

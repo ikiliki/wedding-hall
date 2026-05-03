@@ -1,27 +1,19 @@
-export const root =
-  "group relative flex w-full items-center justify-between gap-6 rounded-2xl border border-line bg-surfaceRaised/40 px-6 py-5 text-left transition hover:border-bone/50 hover:bg-surfaceRaised/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bone/60";
+export const root = "wh-opt-root";
 
-export const rootSelected =
-  "border-bone bg-bone/5 hover:border-bone hover:bg-bone/10";
+export const rootSelected = "wh-opt-selected";
 
-export const main = "flex flex-col gap-1";
+export const main = "wh-opt-main";
 
-export const label =
-  "text-base text-bone";
+export const label = "wh-opt-label";
 
-export const hint =
-  "text-xs text-muted";
+export const hint = "wh-opt-hint";
 
-export const right =
-  "flex shrink-0 items-center gap-3";
+export const right = "wh-opt-right";
 
-export const price =
-  "tabular-nums text-sm text-muted group-hover:text-bone";
+export const price = "wh-opt-price";
 
-export const priceSelected = "text-bone";
+export const priceSelected = "wh-opt-price-on";
 
-export const checkbox =
-  "flex h-6 w-6 items-center justify-center rounded-full border border-bone/40 text-[10px] text-bone";
+export const checkbox = "wh-opt-checkbox";
 
-export const checkboxOn =
-  "border-bone bg-bone text-ink";
+export const checkboxOn = "wh-opt-checkbox-on";

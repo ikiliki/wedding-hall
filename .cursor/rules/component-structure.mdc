@@ -1,5 +1,5 @@
 ---
-globs: ["client/src/**/*.tsx", "client/src/**/*.styles.ts"]
+globs: ["client/src/**/*.tsx", "client/src/**/*.styles.ts", "client/src/**/*.stories.tsx"]
 ---
 
 # Client component structure
@@ -14,7 +14,11 @@ globs: ["client/src/**/*.tsx", "client/src/**/*.styles.ts"]
 - Cross-cutting helpers: `client/src/shared/lib/`.
 
 ## Stories
-- Storybook is **planned**, not installed. Do not add Storybook in passing; if you add it, do so deliberately and align with @RULES.md.
+- **Storybook 8** is installed in `wedding-hall-client`. Co-locate `*.stories.tsx` next to the component (`index.tsx` + `*.styles.ts` in the same folder), or next to `*Page.tsx` for pages.
+- Sidebar groups: **`Common/*`** (shared primitives), **`Features/*`**, **`Pages/*`** (route-level screens). Use `parameters.auth` (`"loggedIn"` or omitted) and `parameters.router.initialEntries` from `.storybook/preview.tsx` for auth + routing.
+- API calls in stories hit **MSW** (`msw-storybook-addon` + `src/storybook/msw/handlers.ts`). Supabase in Storybook is replaced via Vite alias to `src/storybook/mocks/supabase-client.ts` — no real project keys required for layout work.
+- Scripts: `npm run storybook` / `npm run build-storybook` from the repo root (workspace), or `-w wedding-hall-client`.
 
 ## Styling
-- Tailwind class strings live in `*.styles.ts`, composed in the component (array + `filter(Boolean).join(" ")` pattern).
+- Global CSS tokens and layout live in `client/src/styles/style.css` (`wh-*` classes).
+- **`*.styles.ts` files:** export only class name strings composing `wh-*` names; JSX uses those exports (arrays + `filter(Boolean).join(" ")` is fine).

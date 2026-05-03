@@ -210,11 +210,16 @@ export function buildOpenApi(origin: string): OpenApiDocument {
         },
         Profile: {
           type: "object",
-          required: ["id", "created_at", "updated_at"],
+          required: ["id", "is_admin", "created_at", "updated_at"],
           properties: {
             id: { type: "string", format: "uuid" },
             email: { type: ["string", "null"] },
             full_name: { type: ["string", "null"] },
+            is_admin: {
+              type: "boolean",
+              description:
+                "Wedding Hall admin flag. Defaults to false; flipped manually via SQL.",
+            },
             created_at: { type: "string", format: "date-time" },
             updated_at: { type: "string", format: "date-time" },
           },
@@ -266,6 +271,12 @@ export function buildOpenApi(origin: string): OpenApiDocument {
                 "cannot tamper with prices.",
               additionalProperties: true,
             },
+            wedding_date: {
+              type: ["string", "null"],
+              format: "date",
+              description:
+                "Optional calendar date (`YYYY-MM-DD`) for countdown on the dashboard.",
+            },
             created_at: { type: "string", format: "date-time" },
             updated_at: { type: "string", format: "date-time" },
           },
@@ -304,6 +315,11 @@ export function buildOpenApi(origin: string): OpenApiDocument {
               description:
                 "Optional catalog-driven wizard answers. See `WeddingBudget.selections`.",
               additionalProperties: true,
+            },
+            weddingDate: {
+              type: ["string", "null"],
+              description:
+                "ISO `YYYY-MM-DD` for countdown. Null or empty clears. Omit entirely to leave the stored value unchanged.",
             },
           },
         },

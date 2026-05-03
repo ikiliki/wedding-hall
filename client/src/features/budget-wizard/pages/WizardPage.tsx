@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   Navigate,
   Route,
@@ -6,11 +6,24 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { RequireAuth } from "@/shared/components/RequireAuth";
 import { ApiError, fetchBudget } from "@/shared/lib/api";
 import { getCategory, type CategoryId } from "@wedding-hall/shared";
+import {
+  hasWizardDraftProgress,
+  resumeWizardStep,
+  wizardStateFromBudget,
+} from "@/features/budget-wizard/lib/wizard-state-from-budget";
 import { WizardProvider } from "@/features/budget-wizard/state/wizard-context";
+import {
+  WizardSessionProvider,
+  useWizardSession,
+} from "@/features/budget-wizard/state/wizard-session-context";
 import { useWizard } from "@/features/budget-wizard/state/use-wizard";
+import {
+  wizardStepRequiresAuth,
+  type WizardStepId,
+  urlFor,
+} from "@/features/budget-wizard/state/steps";
 import { StepCouple } from "@/features/budget-wizard/components/StepCouple";
 import { StepDate } from "@/features/budget-wizard/components/StepDate";
 import { StepGuests } from "@/features/budget-wizard/components/StepGuests";
@@ -18,7 +31,8 @@ import { StepType } from "@/features/budget-wizard/components/StepType";
 import { CategoryStep } from "@/features/budget-wizard/components/CategoryStep";
 import { StepContinueGate } from "@/features/budget-wizard/components/StepContinueGate";
 import { StepCompletion } from "@/features/budget-wizard/components/StepCompletion";
-import { type WizardStepId } from "@/features/budget-wizard/state/steps";
+import { StepAuthGate } from "@/features/budget-wizard/components/StepAuthGate";
+import { PersistBudgetAfterAuth } from "@/features/budget-wizard/components/PersistBudgetAfterAuth";
 
 // Slug ↔ step id (slug uses dashes, step ids use underscores).
 function slugToStepId(slug: string | undefined): WizardStepId | null {
@@ -27,7 +41,10 @@ function slugToStepId(slug: string | undefined): WizardStepId | null {
   return id;
 }
 
-const CATEGORY_STEPS: ReadonlyArray<{ stepId: WizardStepId; categoryId: CategoryId }> = [
+const CATEGORY_STEPS: ReadonlyArray<{
+  stepId: WizardStepId;
+  categoryId: CategoryId;
+}> = [
   { stepId: "venue", categoryId: "venue" },
   { stepId: "food_upgrade", categoryId: "food_upgrade" },
   { stepId: "bar", categoryId: "bar" },
@@ -45,10 +62,29 @@ const CATEGORY_STEPS: ReadonlyArray<{ stepId: WizardStepId; categoryId: Category
   { stepId: "hidden_costs", categoryId: "hidden_costs" },
 ];
 
-function StepRenderer() {
+export function StepRenderer() {
   const { step } = useParams<{ step: string }>();
   const stepId = slugToStepId(step);
+  const { session, loading } = useWizardSession();
+
   if (!stepId) return <Navigate to="/start" replace />;
+
+  const needsAuthShell =
+    wizardStepRequiresAuth(stepId) && loading;
+  const needsGuestGate =
+    wizardStepRequiresAuth(stepId) && !loading && session === null;
+
+  if (needsAuthShell) {
+    return (
+      <main className="wh-page-center-muted" aria-busy aria-live="polite">
+        טוען…
+      </main>
+    );
+  }
+
+  if (needsGuestGate) {
+    return <StepAuthGate intendedStepId={stepId} />;
+  }
 
   if (stepId === "couple") return <StepCouple />;
   if (stepId === "date") return <StepDate />;
@@ -68,56 +104,87 @@ function StepRenderer() {
 // First-mount: if a budget already exists on the server, hydrate the
 // wizard with it so users can edit instead of starting over. Then jump
 // to whatever step makes sense.
-function HydrateAndStart() {
+export function HydrateAndStart() {
   const navigate = useNavigate();
-  const { state } = useWizard();
+  const { state, hydrateFromBudget } = useWizard();
+  const { session, loading } = useWizardSession();
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   useEffect(() => {
+    if (loading) return;
+
+    const localSnapshot = stateRef.current;
     let cancelled = false;
+
     (async () => {
-      try {
-        const budget = await fetchBudget();
-        if (cancelled) return;
-        // If we already have a saved server-side budget, jump straight
-        // into the dashboard. The wizard re-entry happens via "Edit".
-        if (budget && (state.coupleName1 === "" || state.coupleName2 === "")) {
-          navigate("/dashboard", { replace: true });
+      if (session?.access_token) {
+        try {
+          const budget = await fetchBudget();
+          if (cancelled) return;
+          if (budget) {
+            hydrateFromBudget(budget);
+            const resume = resumeWizardStep(wizardStateFromBudget(budget));
+            navigate(urlFor(resume), { replace: true });
+            return;
+          }
+          if (!hasWizardDraftProgress(localSnapshot)) {
+            navigate("/start/couple", { replace: true });
+            return;
+          }
+          navigate(urlFor(resumeWizardStep(localSnapshot)), { replace: true });
+          return;
+        } catch (err) {
+          if (cancelled) return;
+          if (!(err instanceof ApiError && err.kind === "unauthorized")) {
+            console.error("HydrateAndStart fetchBudget", err);
+          }
+          if (!hasWizardDraftProgress(localSnapshot)) {
+            navigate("/start/couple", { replace: true });
+            return;
+          }
+          navigate(urlFor(resumeWizardStep(localSnapshot)), { replace: true });
           return;
         }
-        navigate("/start/couple", { replace: true });
-      } catch (err) {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.kind === "unauthorized") {
-          navigate("/login", { replace: true });
-          return;
-        }
-        // Server hiccup — let the user start the wizard anyway.
-        navigate("/start/couple", { replace: true });
       }
+
+      if (!hasWizardDraftProgress(localSnapshot)) {
+        navigate("/start/couple", { replace: true });
+        return;
+      }
+      navigate(urlFor(resumeWizardStep(localSnapshot)), { replace: true });
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [navigate, state.coupleName1, state.coupleName2]);
+  }, [navigate, hydrateFromBudget, session, loading]);
 
   return (
-    <main className="flex min-h-dvh items-center justify-center text-sm text-muted">
-      Preparing your wizard…
+    <main className="wh-page-center-muted">
+      מכינים את השאלון…
     </main>
+  );
+}
+
+function WizardRoutes() {
+  return (
+    <WizardProvider>
+      <PersistBudgetAfterAuth />
+      <Routes>
+        <Route index element={<HydrateAndStart />} />
+        <Route path=":step" element={<StepRenderer />} />
+        <Route path="*" element={<Navigate to="/start" replace />} />
+      </Routes>
+    </WizardProvider>
   );
 }
 
 export function WizardPage() {
   return (
-    <RequireAuth>
-      <WizardProvider>
-        <Routes>
-          <Route index element={<HydrateAndStart />} />
-          <Route path=":step" element={<StepRenderer />} />
-          <Route path="*" element={<Navigate to="/start" replace />} />
-        </Routes>
-      </WizardProvider>
-    </RequireAuth>
+    <WizardSessionProvider>
+      <WizardRoutes />
+    </WizardSessionProvider>
   );
 }
 

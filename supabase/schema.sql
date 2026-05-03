@@ -30,6 +30,15 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+-- Phase 1+: admin flag. Default false so existing rows + new signups are
+-- non-admin. Admins are flipped manually via SQL (see
+-- `.claude-rules/skills/manual-vercel-supabase-runbook` step S6).
+-- Cross-user reads still go through RLS — admins can only read their own
+-- row through this column. Cross-user dashboards are deferred until we
+-- agree on a service-role exception (see PLAN.md).
+alter table public.profiles
+  add column if not exists is_admin boolean not null default false;
+
 drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
 before update on public.profiles
@@ -140,6 +149,10 @@ alter table public.wedding_budgets
   add column if not exists guest_count_max integer check (guest_count_max is null or guest_count_max >= 0);
 alter table public.wedding_budgets
   add column if not exists selections jsonb;
+
+-- Optional Gregorian date for homepage countdown (separate from preferred_day).
+alter table public.wedding_budgets
+  add column if not exists wedding_date date;
 
 alter table public.wedding_budgets
   drop constraint if exists wedding_budgets_user_id_key;

@@ -1,53 +1,77 @@
-export const root =
-  "relative isolate min-h-dvh overflow-hidden bg-ink text-bone";
+export const root = "wh-stl-root";
 
-export const spotlight =
-  "pointer-events-none absolute inset-0 -z-10 bg-spotlight";
+export const shellSpotlight = "wh-stl-shell-spotlight";
 
-export const header =
-  "mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-8 sm:px-10 lg:px-16";
+export const blobLg = "wh-stl-blob-lg";
 
-export const brand =
-  "text-xs uppercase tracking-luxe text-bone";
+export const blobSm = "wh-stl-blob-sm";
 
-export const signin =
-  "text-[11px] uppercase tracking-luxe text-muted hover:text-bone";
+export const header = "wh-stl-head";
 
-export const hero =
-  "mx-auto flex w-full max-w-[1400px] flex-col px-6 pb-24 pt-12 sm:px-10 lg:px-16 lg:pt-24";
+export const brand = "wh-stl-brand";
 
-export const eyebrow =
-  "text-[10px] uppercase tracking-luxe text-muted";
+export const signin = "wh-stl-signin";
 
-export const heading =
-  "mt-6 max-w-4xl font-serif text-5xl leading-[1.05] sm:text-6xl lg:text-[88px]";
+export const heroSection = "wh-stl-hero-grid";
 
-export const headingAccent =
-  "italic text-bone/90";
+export const heroCopy = "wh-stl-hero-copy";
 
-export const lede =
-  "mt-8 max-w-xl text-base leading-relaxed text-muted lg:text-lg";
+export const heading = "wh-stl-display";
 
-export const ctaRow =
-  "mt-12 flex flex-col items-start gap-6 sm:flex-row sm:items-center";
+export const headingAccent = "wh-stl-display-accent";
 
-export const secondaryCta =
-  "text-[11px] uppercase tracking-luxe text-muted underline-offset-4 hover:text-bone hover:underline";
+export const lede = "wh-stl-lede";
 
-export const featureList =
-  "mt-24 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:mt-32 lg:max-w-5xl lg:grid-cols-3 lg:gap-14";
+export const ctaRow = "wh-stl-cta-row";
 
-export const feature =
-  "flex items-start gap-4";
+export const visual = "wh-stl-visual";
 
-export const featureNum =
-  "font-serif text-2xl text-bone/30";
+export const photoFrame = "wh-stl-photo-frame";
 
-export const featureTitle =
-  "text-sm text-bone";
+export const photo = "wh-stl-photo";
 
-export const featureBody =
-  "mt-1 text-xs leading-relaxed text-muted";
+export const miniCard = "wh-stl-mini-card soft-animate";
 
-export const footer =
-  "mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-8 text-[10px] uppercase tracking-luxe text-muted sm:px-10 lg:px-16";
+export const miniHead = "wh-stl-mini-header";
+
+export const miniTitle = "wh-stl-mini-title";
+
+export const miniBar = "wh-stl-mini-bar";
+
+export const miniFill = "wh-stl-mini-bar-fill";
+
+export const miniTotals = "wh-stl-mini-totals";
+
+export const featuresSection = "wh-features";
+
+export const featureGrid = "wh-features-grid";
+
+export const featureCard = "wh-feature-card";
+
+export const featureIconSage = "wh-feature-icon material-symbols-outlined sage";
+
+export const featureIconHoney =
+  "wh-feature-icon material-symbols-outlined honey";
+
+export const featureIconBlue =
+  "wh-feature-icon material-symbols-outlined blue";
+
+export const featureTitle = "wh-feature-title";
+
+export const featureBody = "wh-feature-body";
+
+export const banner = "wh-stl-banner";
+
+export const bannerBg = "wh-stl-banner-bg";
+
+export const bannerShade = "wh-stl-banner-shade";
+
+export const bannerBody = "wh-stl-banner-body";
+
+export const footer = "wh-stl-ft";
+
+export const footerRow = "wh-stl-ft-row";
+
+export const footerLinks = "wh-stl-ft-links";
+
+export const footerCopy = "wh-stl-ft-copy";

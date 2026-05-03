@@ -8,6 +8,8 @@ import {
 } from "@/shared/lib/api";
 import { createClient } from "@/shared/lib/supabase";
 import { getPostAuthPath } from "@/shared/lib/post-auth-path";
+import { WIZARD_POST_AUTH_SAVE_KEY } from "@/features/budget-wizard/lib/wizard-post-auth-save";
+import { wizardResumePathMeansPostLoginSave } from "@/features/budget-wizard/lib/wizard-resume-flag";
 import * as styles from "./EmailLoginForm.styles";
 
 // Dev-only convenience: pre-fill the seeded demo user when running locally.
@@ -18,11 +20,35 @@ const DEFAULT_PASSWORD = import.meta.env.DEV ? "test1234" : "";
 
 type Mode = "signin" | "signup";
 
-export function EmailLoginForm() {
+export type EmailLoginFormProps = {
+  /** Staff gate at `/admin`: sign-in only; after auth always returns to `/admin`. */
+  variant?: "default" | "admin";
+  /**
+   * Sanitized wizard path (`/start/...`) from `?returnTo=` when user must
+   * resume the budget flow after sign-in.
+   */
+  wizardResumePath?: string;
+};
+
+export function EmailLoginForm({
+  variant = "default",
+  wizardResumePath,
+}: EmailLoginFormProps) {
   const navigate = useNavigate();
+  const isAdminGate = variant === "admin";
+  const devPrefillEmail = import.meta.env.DEV
+    ? isAdminGate
+      ? "admin@weddinghall.app"
+      : DEFAULT_EMAIL
+    : "";
+  const devPrefillPassword = import.meta.env.DEV
+    ? isAdminGate
+      ? "Admin!2026"
+      : DEFAULT_PASSWORD
+    : "";
   const [mode, setMode] = useState<Mode>("signin");
-  const [email, setEmail] = useState(DEFAULT_EMAIL);
-  const [password, setPassword] = useState(DEFAULT_PASSWORD);
+  const [email, setEmail] = useState(devPrefillEmail);
+  const [password, setPassword] = useState(devPrefillPassword);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -39,9 +65,23 @@ export function EmailLoginForm() {
       setEmail("");
       setPassword("");
     } else {
-      setEmail(DEFAULT_EMAIL);
-      setPassword(DEFAULT_PASSWORD);
+      setEmail(devPrefillEmail);
+      setPassword(devPrefillPassword);
     }
+  }
+
+  async function postAuthNavigate(supabase: ReturnType<typeof createClient>) {
+    const next = isAdminGate
+      ? "/admin"
+      : (wizardResumePath ?? (await getPostAuthPath(supabase)));
+    if (
+      !isAdminGate &&
+      typeof window !== "undefined" &&
+      wizardResumePathMeansPostLoginSave(wizardResumePath)
+    ) {
+      window.sessionStorage.setItem(WIZARD_POST_AUTH_SAVE_KEY, "1");
+    }
+    navigate(next, { replace: true });
   }
 
   async function handlePasswordReset() {
@@ -56,7 +96,7 @@ export function EmailLoginForm() {
       return;
     }
     setInfo(
-      `Sent a password-reset link to ${email.trim()}. Open the email and pick a new password.`,
+      `שלחנו קישור לאיפוס סיסמה ל-${email.trim()}. פתחו את המייל ובחרו סיסמה חדשה.`,
     );
   }
 
@@ -88,20 +128,20 @@ export function EmailLoginForm() {
           return {
             kind: "blocker",
             message:
-              "Signed in, but the server rejected your token. The client and the server are likely pointing at different Supabase projects — verify VITE_SUPABASE_URL on the client matches SUPABASE_URL on the server.",
+              "נכנסתם בהצלחה, אבל השרת דחה את האסימון. ייתכן שהאפליקציה והשרת מצביעים על פרויקטי Supabase שונים — ודאו ש-VITE_SUPABASE_URL אצל הקליינט תואם ל-SUPABASE_URL אצל השרת.",
           };
         }
         const detail =
           err.kind === "network"
-            ? `Could not reach the server at ${err.message.replace(/^.*?at\s*/, "")}.`
-            : `${err.message} (status ${err.status}).`;
+            ? `לא ניתן להגיע לשרת (${err.message.replace(/^.*?at\s*/, "")}).`
+            : `${err.message} (קוד ${err.status}).`;
         console.warn("upsertProfile via server failed (non-fatal)", err);
         return { kind: "warning", message: detail };
       }
       console.warn("upsertProfile via server failed (non-fatal, unknown)", err);
       return {
         kind: "warning",
-        message: "Could not refresh your profile right now.",
+        message: "לא ניתן לרענן את הפרופיל כרגע.",
       };
     }
   }
@@ -114,18 +154,18 @@ export function EmailLoginForm() {
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !/.+@.+\..+/.test(trimmedEmail)) {
-      setErrorMsg("Enter a valid email address.");
+      setErrorMsg("נא למלא כתובת אימייל תקינה.");
       return;
     }
     if (password.length < 6) {
-      setErrorMsg("Password must be at least 6 characters.");
+      setErrorMsg("הסיסמה חייבת להיות לפחות 6 תווים.");
       return;
     }
 
     setLoading(true);
     const supabase = createClient();
 
-    if (mode === "signup") {
+    if (!isAdminGate && mode === "signup") {
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
@@ -138,14 +178,14 @@ export function EmailLoginForm() {
         setLoading(false);
         if (/email rate limit/i.test(error.message)) {
           setErrorMsg(
-            'Email rate limit hit. Turn OFF "Confirm email" in Supabase → Authentication → Providers → Email, then try again.',
+            'הגעתם למגבלת קצב שליחת מיילים. כבו את "אימות אימייל" ב-Supabase ← Authentication ← Providers ← Email, ונסו שוב.',
           );
           return;
         }
         if (/already registered|user already exists|already.+exists/i.test(error.message)) {
           setShowSwitchToSignin(true);
           setErrorMsg(
-            "This email already has an account. Sign in below, or send a password-reset link.",
+            "לאימייל זה כבר יש חשבון. התחברו למטה, או בקשו קישור לאיפוס סיסמה.",
           );
           return;
         }
@@ -160,7 +200,7 @@ export function EmailLoginForm() {
         setLoading(false);
         setShowSwitchToSignin(true);
         setErrorMsg(
-          "This email already has an account. Sign in below, or send a password-reset link.",
+          "לאימייל זה כבר יש חשבון. התחברו למטה, או בקשו קישור לאיפוס סיסמה.",
         );
         return;
       }
@@ -168,7 +208,7 @@ export function EmailLoginForm() {
       if (!data.session) {
         setLoading(false);
         setInfo(
-          `Account created. Check ${trimmedEmail} for a confirmation link, then sign in.`,
+          `החשבון נוצר. בדקו את ${trimmedEmail} לקבלת קישור אימות, ואז התחברו.`,
         );
         return;
       }
@@ -177,7 +217,7 @@ export function EmailLoginForm() {
       if (profileResult.kind === "tablesMissing") {
         setLoading(false);
         setErrorMsg(
-          "Signed up, but the database tables are missing. Run supabase/seed.sql once, then click Sign in.",
+          "נרשמתם בהצלחה, אבל טבלאות המסד נעדרות. הריצו פעם אחת את supabase/seed.sql ואז לחצו על התחברות.",
         );
         return;
       }
@@ -186,9 +226,8 @@ export function EmailLoginForm() {
         setErrorMsg(profileResult.message);
         return;
       }
-      const next = await getPostAuthPath(supabase);
+      await postAuthNavigate(supabase);
       setLoading(false);
-      navigate(next, { replace: true });
       return;
     }
 
@@ -201,13 +240,15 @@ export function EmailLoginForm() {
       setLoading(false);
       if (/email not confirmed/i.test(error.message)) {
         setErrorMsg(
-          "This account exists but its email is not confirmed. Open the confirmation email, or run supabase/seed.sql to seed a pre-confirmed demo user.",
+          "לחשבון זה קיים אימייל שלא אומת. פתחו את מייל האימות, או הריצו supabase/seed.sql ליצירת משתמש דמו מאומת מראש.",
         );
         return;
       }
       if (/invalid login credentials/i.test(error.message)) {
         setErrorMsg(
-          'Wrong email or password. Tap "Sign up" to create a new account.',
+          isAdminGate
+            ? "אימייל או סיסמה שגויים."
+            : 'אימייל או סיסמה שגויים. אם אין לכם חשבון — עברו ללשונית "הרשמה חדשה".',
         );
         return;
       }
@@ -219,7 +260,7 @@ export function EmailLoginForm() {
     if (profileResult.kind === "tablesMissing") {
       setLoading(false);
       setErrorMsg(
-        "Signed in, but the database tables are missing. Run supabase/seed.sql once, then refresh.",
+        "נכנסתם בהצלחה, אבל טבלאות המסד נעדרות. הריצו פעם אחת את supabase/seed.sql ואז רעננו.",
       );
       return;
     }
@@ -228,49 +269,50 @@ export function EmailLoginForm() {
       setErrorMsg(profileResult.message);
       return;
     }
-    const next = await getPostAuthPath(supabase);
+    await postAuthNavigate(supabase);
     setLoading(false);
-    navigate(next, { replace: true });
   }
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       {SERVER_URL_MISCONFIGURED && (
         <div className={styles.configBanner} role="alert">
-          <strong>Setup needed:</strong> this build is missing
-          <code> VITE_SERVER_URL</code>. Set it on the Vercel client project
-          (e.g. <code>https://wedding-hall-server.vercel.app</code>) and
-          redeploy — until then, sign-in will fail.
+          <strong>נדרשת הגדרה:</strong> לבנייה זו חסר{" "}
+          <code>VITE_SERVER_URL</code>. הגדירו אותו בפרויקט הלקוח ב-Vercel
+          (למשל <code>https://wedding-hall-server.vercel.app</code>) ופרסמו
+          מחדש — עד אז ההתחברות לא תצליח.
         </div>
       )}
-      <div className={styles.tabs} role="tablist" aria-label="Sign in or sign up">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === "signin"}
-          className={`${styles.tab} ${
-            mode === "signin" ? styles.tabActive : styles.tabInactive
-          }`}
-          onClick={() => switchMode("signin")}
-        >
-          Sign in
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === "signup"}
-          className={`${styles.tab} ${
-            mode === "signup" ? styles.tabActive : styles.tabInactive
-          }`}
-          onClick={() => switchMode("signup")}
-        >
-          Sign up
-        </button>
-      </div>
+      {!isAdminGate && (
+        <div className={styles.tabs} role="tablist" aria-label="כניסה או הרשמה">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "signin"}
+            className={`${styles.tab} ${
+              mode === "signin" ? styles.tabActive : styles.tabInactive
+            }`}
+            onClick={() => switchMode("signin")}
+          >
+            כניסה למערכת
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "signup"}
+            className={`${styles.tab} ${
+              mode === "signup" ? styles.tabActive : styles.tabInactive
+            }`}
+            onClick={() => switchMode("signup")}
+          >
+            הרשמה חדשה
+          </button>
+        </div>
+      )}
 
       <div className={styles.field}>
         <label htmlFor="email" className={styles.label}>
-          Email
+          כתובת אימייל
         </label>
         <input
           id="email"
@@ -280,7 +322,7 @@ export function EmailLoginForm() {
           className={styles.input}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder={isAdminGate ? "admin@example.co.il" : "name@domain.co.il"}
           required
           disabled={loading}
         />
@@ -288,7 +330,7 @@ export function EmailLoginForm() {
 
       <div className={styles.field}>
         <label htmlFor="password" className={styles.label}>
-          Password
+          סיסמה
         </label>
         <input
           id="password"
@@ -305,7 +347,7 @@ export function EmailLoginForm() {
           minLength={6}
         />
         {mode === "signup" && (
-          <p className={styles.helper}>At least 6 characters.</p>
+          <p className={styles.helper}>לפחות 6 תווים.</p>
         )}
       </div>
 
@@ -321,14 +363,14 @@ export function EmailLoginForm() {
                 className={styles.linkButton}
                 onClick={() => switchMode("signin")}
               >
-                Switch to sign in
+                עברו להתחברות
               </button>
               <button
                 type="button"
                 className={styles.linkButton}
                 onClick={handlePasswordReset}
               >
-                Email me a reset link
+                שלחו לי קישור לאיפוס
               </button>
             </div>
           )}
@@ -349,11 +391,11 @@ export function EmailLoginForm() {
       >
         {loading
           ? mode === "signup"
-            ? "Creating..."
-            : "Signing in..."
+            ? "יוצרים חשבון…"
+            : "מתחברים…"
           : mode === "signup"
-            ? "Create account"
-            : "Sign in"}
+            ? "פתיחת חשבון"
+            : "התחברות"}
       </Button>
     </form>
   );

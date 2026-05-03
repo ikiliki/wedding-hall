@@ -6,8 +6,9 @@
 #   rest     postgrest (Supabase data API)
 #   gateway  nginx routing /auth/v1 + /rest/v1 onto port 54321
 #   seed     one-shot loader for supabase/seed.sql (creates demo user)
-#   client   Vite dev server on http://localhost:5173
-#   server   Next.js dev server on http://localhost:3001
+#   client     Vite dev server on http://localhost:5173
+#   storybook  Storybook on http://localhost:6006 (MSW mocks; no DB/server required)
+#   server     Next.js dev server on http://localhost:3001
 #
 # Bring it up:
 #   docker compose up -d --build
@@ -115,8 +116,8 @@ services:
     volumes:
       - ./supabase/seed.sql:/seed.sql:ro
       - ./supabase/fix-prod-and-seed-demo-user.sql:/demo.sql:ro
-    # Apply seed (schema + test@gmail.com) AND the demo seed (mock-budget
-    # demo@weddinghall.app + omri repair), then NOTIFY PostgREST to refresh
+    # Apply seed (schema + users incl. admin@weddinghall.app) then demo.sql
+    # (demo budget + omri repair + admin mock budget refresh), then NOTIFY
     # its schema cache. PostgREST boots before the tables exist, so without
     # this NOTIFY the first PUT to /api/budget returns "404 / empty body"
     # until you manually restart the rest container.
@@ -152,6 +153,47 @@ services:
       - client_node_modules:/repo/node_modules
       - client_workspace_node_modules:/repo/client/node_modules
 
+  storybook:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: wh-storybook
+    restart: unless-stopped
+    # UI-only dev: MSW + mock Supabase in Storybook; no gateway/server needed.
+    ports:
+      - "6006:6006"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      # Match `client` so Vite exposes `import.meta.env.VITE_*` inside the container.
+      # (Storybook still aliases `@/shared/lib/supabase` to the shim; this avoids the
+      # real `createClient` guard if anything resolves the app module path.)
+      VITE_SUPABASE_URL: http://localhost:54321
+      VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6IndlZGRpbmctaGFsbC1sb2NhbCIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxNzk5NTM1NjAwfQ.JxejbUaxXmfGDcu7-FsaoReqSHXWG1CRnKUwq06VX3o
+      VITE_SERVER_URL: http://localhost:3001
+    volumes:
+      - ./client:/repo/client
+      - ./packages:/repo/packages
+      # Own node_modules volumes: `client_*` may predate Storybook in the image layer
+      # and would hide hoisted `node_modules/.bin/storybook`.
+      - storybook_repo_node_modules:/repo/node_modules
+      - storybook_client_workspace_node_modules:/repo/client/node_modules
+    # Run from monorepo root so hoisted `.bin/storybook` is on PATH (devDependency).
+    working_dir: /repo
+    command:
+      [
+        "npm",
+        "run",
+        "storybook",
+        "-w",
+        "wedding-hall-client",
+        "--",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "6006",
+        "--no-open",
+      ]
+
   server:
     build:
       context: .
@@ -180,4 +222,6 @@ volumes:
   server_node_modules:
   client_workspace_node_modules:
   server_workspace_node_modules:
+  storybook_repo_node_modules:
+  storybook_client_workspace_node_modules:
 

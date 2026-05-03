@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { formatILS } from "@wedding-hall/shared";
 import { Button } from "@/shared/components/Button";
 import { createClient } from "@/shared/lib/supabase";
 import { getPostAuthPath } from "@/shared/lib/post-auth-path";
 import * as styles from "./LandingPage.styles";
+
+const HERO_IMG =
+  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80";
 
 export function LandingPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [signedIn, setSignedIn] = useState(false);
 
-  // 1) If a Supabase confirmation link landed on `/?code=...`, forward.
-  // 2) If the user already has a session, show "Continue" instead of "Start".
   useEffect(() => {
     const code = searchParams.get("code");
     if (code) {
@@ -37,83 +39,141 @@ export function LandingPage() {
   }
 
   return (
-    <main className={styles.root}>
-      <div className={styles.spotlight} aria-hidden />
+    <div className={styles.root}>
+      <div className={styles.shellSpotlight} aria-hidden>
+        <div className={styles.blobLg} />
+        <div className={styles.blobSm} />
+      </div>
 
       <header className={styles.header}>
-        <Link to="/" className={styles.brand}>
+        <Link className={styles.brand} to="/">
           Wedding Hall
         </Link>
-        <Link to="/login" className={styles.signin}>
-          {signedIn ? "Account" : "Sign in"}
+        <Link className={styles.signin} to="/login">
+          {signedIn ? "החשבון שלכם" : "התחברות"}
         </Link>
       </header>
 
-      <section className={styles.hero}>
-        <p className={styles.eyebrow}>Welcome</p>
-        <h1 className={styles.heading}>
-          Build your first
-          <br />
-          <span className={styles.headingAccent}>wedding budget</span>
-          <br />
-          in minutes.
-        </h1>
-        <p className={styles.lede}>
-          We'll walk you through it together — venue, food, music, flowers —
-          one calm question at a time. So nothing gets missed, and your
-          special day stays peaceful.
-        </p>
-
-        <div className={styles.ctaRow}>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleContinue}
-            aria-label="Let's start"
-          >
-            Let's start
-          </Button>
-          <Link to="/login" className={styles.secondaryCta}>
-            Already have an account? Sign in
-          </Link>
+      <section className={styles.heroSection}>
+        <div className={styles.heroCopy}>
+          <h1 className={styles.heading}>
+            התקציב שלכם,
+            <br />
+            <span className={styles.headingAccent}>החתונה שלכם</span>
+          </h1>
+          <p className={styles.lede}>
+            הפכו את תהליך תכנון החתונה לחוויה רגועה ומאורגנת. עם הכלים
+            המקצועיים שלנו תוכלו לנהל כל שקל בביטחון ולהתרכז ברגעים החשובים.
+          </p>
+          <div className={styles.ctaRow}>
+            <Button variant="primary" size="lg" onClick={handleContinue}>
+              התחילו עכשיו
+            </Button>
+            <Link to="/login">
+              <Button variant="secondary" size="lg" type="button">
+                התחברות
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        <ul className={styles.featureList} aria-label="What you get">
-          <li className={styles.feature}>
-            <span className={styles.featureNum}>01</span>
-            <div>
-              <p className={styles.featureTitle}>Step-by-step questions</p>
-              <p className={styles.featureBody}>
-                Pick from cheap, average, premium — or your own price.
-              </p>
+        <div className={styles.visual}>
+          <div className={styles.photoFrame}>
+            <img className={styles.photo} alt="" src={HERO_IMG} />
+          </div>
+          <div className={styles.miniCard}>
+            <div className={styles.miniHead}>
+              <span className={styles.miniTitle}>סטטוס תקציב</span>
+              <span
+                className="material-symbols-outlined"
+                aria-hidden
+                style={{
+                  fontSize: "1.375rem",
+                  color: "var(--stl-primary)",
+                }}
+              >
+                account_balance_wallet
+              </span>
             </div>
-          </li>
-          <li className={styles.feature}>
-            <span className={styles.featureNum}>02</span>
-            <div>
-              <p className={styles.featureTitle}>One running total</p>
-              <p className={styles.featureBody}>
-                Watch your estimated budget grow line by line.
-              </p>
+            <div className={styles.miniBar}>
+              <div className={styles.miniFill} />
             </div>
-          </li>
-          <li className={styles.feature}>
-            <span className={styles.featureNum}>03</span>
-            <div>
-              <p className={styles.featureTitle}>Your real prices, later</p>
-              <p className={styles.featureBody}>
-                Compare estimated vs. actual once you start booking.
-              </p>
+            <div className={styles.miniTotals}>
+              <strong>{formatILS(84_500)}</strong>
+              <span>מתוך {formatILS(130_000)}</span>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.featuresSection} aria-label="למה Wedding Hall">
+        <div className={styles.featureGrid}>
+          <article className={styles.featureCard}>
+            <span className={styles.featureIconSage} aria-hidden>
+              task_alt
+            </span>
+            <h3 className={styles.featureTitle}>תכנון בקלות</h3>
+            <p className={styles.featureBody}>
+              ניהול משימות חכם שמציג את מה שדחוף באמת, כדי שלא ייחסך פרט קטן
+              בדרך לחופה.
+            </p>
+          </article>
+          <article className={styles.featureCard}>
+            <span className={styles.featureIconHoney} aria-hidden>
+              analytics
+            </span>
+            <h3 className={styles.featureTitle}>מעקב תקציב</h3>
+            <p className={styles.featureBody}>
+              ניתוח הוצאות בזמן אמת — רואים לאן הכסף הולך ומקבלים התראות על
+              חריגות צפויות.
+            </p>
+          </article>
+          <article className={styles.featureCard}>
+            <span className={styles.featureIconBlue} aria-hidden>
+              verified
+            </span>
+            <h3 className={styles.featureTitle}>הערכות מקצועיות</h3>
+            <p className={styles.featureBody}>
+              הצעות מחיר על בסיס נתונים מהשוק הישראלי — כדי לנהל משא ומתן מול
+              ספקים מעמדת כוח.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className={styles.banner} aria-label="קול לפעולה">
+        <div className={styles.bannerBg} />
+        <div className={styles.bannerShade} />
+        <div className={styles.bannerBody}>
+          <h2>מוכנים להתחיל לתכנן?</h2>
+          <p>
+            הצטרפו לאלפי זוגות שכבר מנהלים את החתונה בדרך החכמה והשקטה ביותר.
+          </p>
+          <Button
+            className="wh-stl-banner-cta"
+            variant="secondary"
+            size="lg"
+            type="button"
+            onClick={handleContinue}
+          >
+            יצירת חשבון חינם
+          </Button>
+        </div>
       </section>
 
       <footer className={styles.footer}>
-        <span>© Wedding Hall</span>
-        <span>Designed for desktop and mobile.</span>
+        <div className={styles.footerRow}>
+          <nav className={styles.footerLinks} aria-label="קישורים">
+            <a href="#">תנאי שימוש</a>
+            <a href="#">מדיניות פרטיות</a>
+            <a href="#">צור קשר</a>
+          </nav>
+          <p className={styles.footerCopy} dir="ltr">
+            © Wedding Hall · כל הזכויות שמורות
+          </p>
+        </div>
       </footer>
-    </main>
+    </div>
   );
 }
 

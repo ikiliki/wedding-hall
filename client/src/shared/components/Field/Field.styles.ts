@@ -1,11 +1,9 @@
-export const wrap = "flex flex-col gap-2";
+export const wrap = "wh-field-wrap";
 
-export const label = "text-[10px] uppercase tracking-luxe text-muted";
+export const label = "wh-field-label";
 
-export const input =
-  "w-full rounded-2xl border border-line bg-surfaceRaised/40 px-5 py-4 text-lg text-bone placeholder:text-muted focus:border-bone focus:outline-none";
+export const input = "wh-field-input";
 
-export const inputSm =
-  "w-full rounded-2xl border border-line bg-surfaceRaised/40 px-4 py-3 text-base text-bone placeholder:text-muted focus:border-bone focus:outline-none";
+export const inputSm = "wh-field-input wh-field-input-sm";
 
-export const helper = "text-xs text-muted";
+export const helper = "wh-field-helper";

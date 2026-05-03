@@ -4,22 +4,23 @@ import { OptionCard } from "@/shared/components/OptionCard";
 import { WizardLayout } from "@/shared/components/WizardLayout";
 import { useWizard } from "@/features/budget-wizard/state/use-wizard";
 import { TOTAL_STEPS, stepNumber, urlFor } from "@/features/budget-wizard/state/steps";
+import { WizardChoiceRow } from "@/features/budget-wizard/components/WizardChoiceRow";
 
 const TYPES = [
   {
     id: "hall" as const,
-    label: "Wedding venue (hall)",
-    hint: "Indoor, air-conditioned, classic, full production",
+    label: "אולם אירועים",
+    hint: "פנים, מיזוג, הפקה מלאה וקלאסי",
   },
   {
     id: "outdoor" as const,
-    label: "Outdoor garden venue",
-    hint: "Gardens, open spaces, greenery, nature reserves",
+    label: "גן חיצוני",
+    hint: "גינות, חופים, טבע ומרחבים פתוחים",
   },
   {
     id: "unique" as const,
-    label: "Unique location",
-    hint: "Desert, beach, farm, vineyard, open-air unique spaces",
+    label: "מיקום ייחודי",
+    hint: "מדבר, חוף, חווה, יקב ומרחבים מיוחדים",
   },
 ];
 
@@ -41,36 +42,51 @@ export function StepType() {
 
   return (
     <WizardLayout
+      currentStepId="type"
       stepNumber={stepNumber("type")}
       totalSteps={TOTAL_STEPS}
-      eyebrow="Step 4 — Setting"
-      title="What kind of wedding?"
-      subtitle="Each setting unlocks a slightly different planning path. We're starting with halls today; outdoor and unique flows arrive next."
+      title="איזה סוג חתונה?"
+      subtitle="לכל סגנון יש מסלול תכנון קצת שונה. כרגע מתמקדים באולמות; גן ומיקום ייחודי יתווספו בהמשך."
       footer={
         <>
-          <Button type="button" variant="ghost" onClick={() => navigate(urlFor("guests"))}>
-            Back
-          </Button>
-          <Button
+          <div className="wh-wizard-stitch-footer-actions">
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              onClick={() => pickAndContinue(state.weddingTypeKind)}
+              className="wh-wizard-stitch-next"
+            >
+              המשך
+              <span className="material-symbols-outlined" aria-hidden>
+                arrow_back
+              </span>
+            </Button>
+          </div>
+          <button
             type="button"
-            variant="primary"
-            size="lg"
-            onClick={() => pickAndContinue(state.weddingTypeKind)}
+            className="wh-wizard-stitch-back"
+            onClick={() => navigate(urlFor("guests"))}
           >
-            Continue
-          </Button>
+            <span className="material-symbols-outlined" aria-hidden>
+              arrow_forward
+            </span>
+            חזור
+          </button>
         </>
       }
     >
-      {TYPES.map((t) => (
-        <OptionCard
-          key={t.id}
-          label={t.label}
-          hint={t.hint}
-          selected={state.weddingTypeKind === t.id}
-          onSelect={() => pickAndContinue(t.id)}
-        />
-      ))}
+      <WizardChoiceRow variant="triple" legend="סוג חתונה">
+        {TYPES.map((t) => (
+          <OptionCard
+            key={t.id}
+            label={t.label}
+            hint={t.hint}
+            selected={state.weddingTypeKind === t.id}
+            onSelect={() => pickAndContinue(t.id)}
+          />
+        ))}
+      </WizardChoiceRow>
     </WizardLayout>
   );
 }

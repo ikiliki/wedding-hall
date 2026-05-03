@@ -15,13 +15,16 @@ import type {
   PreferredDay,
   SaveBudgetPayload,
   VenuePriceType,
+  WeddingBudget,
   WeddingType,
 } from "@wedding-hall/shared";
 import { computeBudgetTotals, getCategory } from "@wedding-hall/shared";
 import { saveBudget } from "@/features/budget-wizard/lib/saveBudget";
+import { wizardStateFromBudget } from "@/features/budget-wizard/lib/wizard-state-from-budget";
 import {
   WizardContext,
   type Ctx,
+  type SaveServerOptions,
   type WizardState,
   type WizardSubtype,
 } from "./wizard-types";
@@ -38,6 +41,7 @@ const EMPTY: WizardState = {
   selections: {},
   continuedExtended: false,
   actuals: {},
+  celebrationDate: "",
 };
 
 function loadFromStorage(): WizardState {
@@ -129,6 +133,14 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const setCelebrationDate = useCallback((iso: string) => {
+    setState((s) => ({ ...s, celebrationDate: iso }));
+  }, []);
+
+  const hydrateFromBudget = useCallback((b: WeddingBudget) => {
+    setState(wizardStateFromBudget(b));
+  }, []);
+
   const reset = useCallback(() => {
     setState(EMPTY);
     if (typeof window !== "undefined") {
@@ -136,7 +148,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const saveServer = useCallback(async () => {
+  const saveServer = useCallback(async (opts?: SaveServerOptions) => {
     // Pull venue tier info for the legacy DB columns (the server still
     // stores venue_price_type / venue_price_per_guest as denormalised
     // values for the dashboard quick view).
@@ -163,6 +175,11 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     const weddingType: WeddingType = "hall";
     const guestCount = guestMid;
 
+    const continuedExtended =
+      opts?.continuedExtended !== undefined
+        ? opts.continuedExtended
+        : state.continuedExtended;
+
     const payload: SaveBudgetPayload = {
       coupleName1: state.coupleName1.trim(),
       coupleName2: state.coupleName2.trim(),
@@ -180,9 +197,11 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
         selections: state.selections,
         actuals: state.actuals,
         weddingTypeKind: state.weddingTypeKind,
-        continuedExtended: state.continuedExtended,
+        continuedExtended,
       },
     };
+
+    payload.weddingDate = state.celebrationDate.trim() || null;
 
     await saveBudget(payload);
   }, [state, guestMid]);
@@ -200,6 +219,8 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
       setSelection,
       setContinuedExtended,
       setActual,
+      setCelebrationDate,
+      hydrateFromBudget,
       reset,
       saveServer,
     }),
@@ -215,6 +236,8 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
       setSelection,
       setContinuedExtended,
       setActual,
+      setCelebrationDate,
+      hydrateFromBudget,
       reset,
       saveServer,
     ],

@@ -41,6 +41,9 @@ yarn-error.log*
 supabase/.temp
 supabase/.branches
 
+# Storybook static export (wedding-hall-client)
+client/storybook-static
+
 # IDE
 .idea
 .vscode

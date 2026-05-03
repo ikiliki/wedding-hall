@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ALL_CATEGORIES,
@@ -20,7 +20,31 @@ type LineRow = {
   actual: number;
 };
 
-function BudgetContent() {
+function actualsRecordFromSelections(
+  raw: Partial<Record<string, number>> | undefined,
+): Record<string, number> {
+  const flat: Record<string, number> = {};
+  if (!raw) return flat;
+  for (const [k, v] of Object.entries(raw)) {
+    if (typeof v === "number" && Number.isFinite(v)) flat[k] = v;
+  }
+  return flat;
+}
+
+function actualsEqual(
+  a: Record<string, number>,
+  b: Record<string, number>,
+): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const k of keys) {
+    const av = typeof a[k] === "number" ? a[k] : 0;
+    const bv = typeof b[k] === "number" ? b[k] : 0;
+    if (av !== bv) return false;
+  }
+  return true;
+}
+
+export function BudgetContent() {
   const navigate = useNavigate();
   const [budget, setBudget] = useState<WeddingBudget | null>(null);
   const [actuals, setActuals] = useState<Record<string, number>>({});
@@ -38,12 +62,7 @@ function BudgetContent() {
           return;
         }
         setBudget(data);
-        const rawActuals = data.selections?.actuals ?? {};
-        const flatActuals: Record<string, number> = {};
-        for (const [k, v] of Object.entries(rawActuals)) {
-          if (typeof v === "number") flatActuals[k] = v;
-        }
-        setActuals(flatActuals);
+        setActuals(actualsRecordFromSelections(data.selections?.actuals));
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ApiError && err.kind === "unauthorized") {
@@ -51,7 +70,7 @@ function BudgetContent() {
           return;
         }
         setErrorMessage(
-          err instanceof Error ? err.message : "Could not load your budget.",
+          err instanceof Error ? err.message : "לא ניתן לטעון את התקציב.",
         );
       }
     })();
@@ -66,7 +85,7 @@ function BudgetContent() {
       setSaving(true);
       setErrorMessage(null);
       try {
-        await saveBudget({
+        const updated = await saveBudget({
           coupleName1: budget.couple_name_1,
           coupleName2: budget.couple_name_2,
           preferredDay: budget.preferred_day ?? "",
@@ -85,12 +104,16 @@ function BudgetContent() {
             actuals: nextActuals,
           },
         });
+        if (updated) {
+          setBudget(updated);
+          setActuals(actualsRecordFromSelections(updated.selections?.actuals));
+        }
       } catch (err) {
         if (err instanceof ApiError) {
           setErrorMessage(err.message);
         } else {
           setErrorMessage(
-            err instanceof Error ? err.message : "Could not save actuals.",
+            err instanceof Error ? err.message : "לא ניתן לשמור את הסכומים.",
           );
         }
       } finally {
@@ -98,6 +121,16 @@ function BudgetContent() {
       }
     },
     [budget],
+  );
+
+  const savedActuals = useMemo(
+    () => actualsRecordFromSelections(budget?.selections?.actuals),
+    [budget],
+  );
+
+  const dirty = useMemo(
+    () => budget != null && !actualsEqual(actuals, savedActuals),
+    [budget, actuals, savedActuals],
   );
 
   function handleActualChange(categoryId: string, raw: string) {
@@ -109,8 +142,6 @@ function BudgetContent() {
       } else {
         next[categoryId] = value;
       }
-      // Debounced save: fire-and-forget; the latest write wins.
-      void persistActuals(next);
       return next;
     });
   }
@@ -118,14 +149,14 @@ function BudgetContent() {
   if (errorMessage && !budget) {
     return (
       <DashboardShell>
-        <p className="text-sm text-red-400">{errorMessage}</p>
+        <p className="wh-text-error-sm">{errorMessage}</p>
       </DashboardShell>
     );
   }
   if (!budget) {
     return (
       <DashboardShell>
-        <p className="text-sm text-muted">Loading…</p>
+        <p className="wh-text-muted-sm">טוען…</p>
       </DashboardShell>
     );
   }
@@ -156,34 +187,34 @@ function BudgetContent() {
     <DashboardShell>
       <section className={styles.totalsRow}>
         <div className={styles.totalCard}>
-          <p className={styles.eyebrow}>Estimated</p>
+          <p className={styles.eyebrow}>אומדן</p>
           <p className={styles.amount}>{formatILS(totalEstimated)}</p>
-          <p className={styles.sub}>From the wizard answers.</p>
+          <p className={styles.sub}>לפי תשובות השאלון.</p>
         </div>
         <div className={styles.totalCard}>
-          <p className={styles.eyebrow}>Actual so far</p>
+          <p className={styles.eyebrow}>בפועל עד כה</p>
           <p className={styles.amount}>{formatILS(totalActual)}</p>
           <p className={styles.sub}>
             {totalActual === 0
-              ? "Fill in real prices below as you book."
-              : `${delta >= 0 ? "+" : "-"}${formatILS(Math.abs(delta))} vs. estimate`}
+              ? "מלאו מחירים אמיתיים למטה ככל שסוגרים עם ספקים."
+              : `${delta >= 0 ? "+" : "-"}${formatILS(Math.abs(delta))} לעומת האומדן`}
           </p>
         </div>
       </section>
 
       <section>
-        <h2 className={styles.heading}>Line items</h2>
+        <h2 className={styles.heading}>פירוט שורות</h2>
         {rows.length === 0 ? (
           <p className={styles.empty}>
-            You haven't answered any wizard categories yet. Open the wizard
-            to start filling in your budget.
+            עוד לא עניתם על קטגוריות בשאלון. פתחו את השאלון כדי להתחיל למלא
+            את התקציב.
           </p>
         ) : (
           <div className={styles.table}>
             <div className={styles.tableHead}>
-              <span>Category</span>
-              <span className={styles.headRight}>Estimated</span>
-              <span className={styles.headRight}>Actual</span>
+              <span>קטגוריה</span>
+              <span className={styles.headRight}>אומדן</span>
+              <span className={styles.headRight}>בפועל</span>
             </div>
             {rows.map((row) => (
               <div key={row.category.id} className={styles.tableRow}>
@@ -214,19 +245,20 @@ function BudgetContent() {
           </div>
         )}
         {errorMessage && (
-          <p className="mt-4 text-sm text-red-400">{errorMessage}</p>
+          <p className="wh-mt-4-error wh-text-error-sm">{errorMessage}</p>
         )}
         <div className={styles.footerRow}>
+          {saving ? (
+            <span className={styles.savingHint}>שומרים…</span>
+          ) : null}
           <Button
             type="button"
-            variant="ghost"
-            onClick={() => navigate("/start")}
+            variant="primary"
+            disabled={!dirty || saving || rows.length === 0}
+            onClick={() => void persistActuals(actuals)}
           >
-            Edit answers
+            שמירת שינויים
           </Button>
-          <span className={styles.savingHint}>
-            {saving ? "Saving…" : "Auto-saves as you type"}
-          </span>
         </div>
       </section>
     </DashboardShell>

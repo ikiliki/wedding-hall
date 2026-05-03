@@ -43,8 +43,8 @@ export function RequireAuth({ children }: Props) {
 
   if (!ready || !authed) {
     return (
-      <main className="flex min-h-dvh items-center justify-center px-6 text-sm text-muted">
-        Loading…
+      <main className="wh-page-center-muted">
+        טוען…
       </main>
     );
   }

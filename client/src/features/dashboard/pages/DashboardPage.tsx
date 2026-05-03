@@ -6,7 +6,7 @@ import { DashboardShell } from "@/features/dashboard/components/DashboardShell";
 import { RequireAuth } from "@/shared/components/RequireAuth";
 import { ApiError, fetchBudget } from "@/shared/lib/api";
 
-function DashboardContent() {
+export function DashboardContent() {
   const navigate = useNavigate();
   const [budget, setBudget] = useState<WeddingBudget | null | undefined>(
     undefined,
@@ -34,7 +34,7 @@ function DashboardContent() {
         setErrorMessage(
           err instanceof Error
             ? err.message
-            : "Could not load your wedding budget.",
+            : "לא ניתן לטעון את תקציב החתונה.",
         );
         setBudget(null);
       }
@@ -48,7 +48,9 @@ function DashboardContent() {
   if (budget === undefined) {
     return (
       <DashboardShell>
-        <p className="text-sm text-muted">Loading…</p>
+        <p style={{ margin: 0, textAlign: "right", color: "var(--stl-outline)" }}>
+          טוען…
+        </p>
       </DashboardShell>
     );
   }
@@ -56,7 +58,9 @@ function DashboardContent() {
   if (errorMessage) {
     return (
       <DashboardShell>
-        <p className="text-sm text-red-400">{errorMessage}</p>
+        <p style={{ margin: 0, textAlign: "right", color: "rgb(186 26 26)" }}>
+          {errorMessage}
+        </p>
       </DashboardShell>
     );
   }

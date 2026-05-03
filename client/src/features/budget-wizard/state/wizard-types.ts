@@ -8,6 +8,7 @@ import type {
   CategoryId,
   CategorySelection,
   PreferredDay,
+  WeddingBudget,
 } from "@wedding-hall/shared";
 
 export type WizardSubtype = "hall" | "outdoor" | "unique";
@@ -22,6 +23,12 @@ export type WizardState = {
   selections: BudgetSelections["selections"];
   continuedExtended: boolean;
   actuals: Record<string, number>;
+  /** Optional `YYYY-MM-DD` — saved with the budget for dashboard countdown. */
+  celebrationDate: string;
+};
+
+export type SaveServerOptions = {
+  continuedExtended?: boolean;
 };
 
 export type Ctx = {
@@ -36,8 +43,10 @@ export type Ctx = {
   setSelection: (categoryId: CategoryId, selection: CategorySelection | undefined) => void;
   setContinuedExtended: (v: boolean) => void;
   setActual: (lineId: string, amount: number) => void;
+  setCelebrationDate: (iso: string) => void;
+  hydrateFromBudget: (b: WeddingBudget) => void;
   reset: () => void;
-  saveServer: () => Promise<void>;
+  saveServer: (opts?: SaveServerOptions) => Promise<void>;
 };
 
 export const WizardContext = createContext<Ctx | null>(null);

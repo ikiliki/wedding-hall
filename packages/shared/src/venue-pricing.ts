@@ -22,32 +22,32 @@ export const VENUE_TIERS: ReadonlyArray<{
 }> = [
   {
     id: "cheap",
-    label: "Cheap",
-    description: "₪250 per guest",
+    label: "בסיסי",
+    description: "₪250 לאורח",
     pricePerGuest: VENUE_PRICES.cheap,
   },
   {
     id: "average",
-    label: "Average",
-    description: "₪400 per guest",
+    label: "ממוצע",
+    description: "₪400 לאורח",
     pricePerGuest: VENUE_PRICES.average,
   },
   {
     id: "premium",
-    label: "Premium",
-    description: "₪650 per guest",
+    label: "פרימיום",
+    description: "₪650 לאורח",
     pricePerGuest: VENUE_PRICES.premium,
   },
   {
     id: "custom",
-    label: "Custom",
-    description: "Enter your own price",
+    label: "מותאם אישית",
+    description: "הזינו מחיר משלכם",
     pricePerGuest: null,
   },
 ];
 
 export function formatILS(amount: number): string {
-  return `₪${amount.toLocaleString("en-US")}`;
+  return `₪${amount.toLocaleString("he-IL")}`;
 }
 
 // Resolve effective price-per-guest for a tier choice. Custom requires a

@@ -10,7 +10,7 @@ Use when the user wants to run the app locally without touching cloud Supabase, 
 ## Prerequisites
 
 - Docker Desktop running (Compose v2 ships with it).
-- Ports free locally: **5173** (client), **3001** (server), **54321** (gateway), **54322** (postgres).
+- Ports free locally: **5173** (client), **6006** (Storybook), **3001** (server), **54321** (gateway), **54322** (postgres).
 
 ## Bring it up
 
@@ -29,6 +29,7 @@ docker compose logs -f seed
 Then open:
 
 - Client → <http://localhost:5173>
+- Storybook → <http://localhost:6006> — `docker compose up -d --build storybook` (UI-only; MSW + mock Supabase; no DB/server required). To run the full stack **and** Storybook, use `docker compose up -d --build` (all services).
 - Server health → <http://localhost:3001/api/health>
 - Server docs → <http://localhost:3001/docs>
 - Server budget endpoint (will 401 without a JWT — expected) → <http://localhost:3001/api/budget>
@@ -51,6 +52,7 @@ Email `test@gmail.com`, password `test1234` — created by `supabase/seed.sql`.
 | Tail every service | `docker compose logs -f` |
 | Tail one service | `docker compose logs -f auth` |
 | Tail server data calls | `docker compose logs -f server` |
+| Tail Storybook | `docker compose logs -f storybook` |
 | Reset DB completely | `docker compose down -v && docker compose up -d --build` |
 | Run a psql shell | `docker compose exec db psql -U postgres` |
 | Re-run seed only | `docker compose run --rm seed` |
@@ -65,6 +67,9 @@ Email `test@gmail.com`, password `test1234` — created by `supabase/seed.sql`.
 - **Supabase JS errors with 401**: anon key in env must match the JWT secret. Don't edit one without the other.
 - **`PUT /api/budget` returns 500 with empty error `{}`**: PostgREST's schema cache is stale because it started before the seed created the tables. The `seed` container now sends `NOTIFY pgrst, 'reload schema'` after each run, but if you bring services up in an unusual order, force a refresh with `docker compose restart rest` (or `psql -h localhost -p 54322 -U postgres -c "NOTIFY pgrst, 'reload schema';"`).
 - **Hot reload slow on Windows**: this is Docker Desktop file-mount overhead. Either accept the lag or run `npm run dev:client` / `dev:server` outside Docker against the same DB stack (just keep `db`, `auth`, `rest`, `gateway` running).
+- **Storybook missing `VITE_SUPABASE_*` in Docker**: give the `storybook` service the same `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_SERVER_URL` as `client` in `docker-compose.yml` so Vite exposes them in the container.
+the Storybook service uses its own volumes (`storybook_*_node_modules`); sharing `client_node_modules` with an older install can omit the CLI. Fresh volumes populate from the image on first attach; recreate with `--build` after adding Storybook to `client/package.json` if stuck.
+- **`spawn xdg-open ENOENT`** in Storybook logs: the compose command includes `--no-open` so Alpine does not try to open a browser inside the container. If you still see this, recreate the `storybook` container from the current `docker-compose.yml`.
 
 ## Don't
 

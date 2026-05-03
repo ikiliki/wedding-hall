@@ -78,6 +78,11 @@ export function stepNumber(id: WizardStepId): number {
   return i + 1;
 }
 
+/** Steps 1–5 run without signing in; from step 6 (food_upgrade…) auth is required. */
+export function wizardStepRequiresAuth(id: WizardStepId): boolean {
+  return stepNumber(id) >= 6;
+}
+
 export function urlFor(id: WizardStepId): string {
   return `/start/${id.replace(/_/g, "-")}`;
 }

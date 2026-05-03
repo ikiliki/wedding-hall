@@ -16,6 +16,8 @@ This plan governs what is in scope. New work must reference this file.
   - Venue price selection
 - Save budget to Supabase by `user_id` (via server)
 - Dashboard with saved estimate (via server)
+- `/admin` placeholder route, gated on `profiles.is_admin` (manually
+  flipped via SQL — see `.claude-rules/skills/manual-vercel-supabase-runbook` step S6)
 
 ### Phase 1 routes (client — Vite dev server default port **5173**)
 
@@ -24,6 +26,7 @@ This plan governs what is in scope. New work must reference this file.
 - `/auth/callback`
 - `/onboarding`
 - `/dashboard`
+- `/admin` — admin-only placeholder (real admin features deferred)
 
 ### Server (Phase 1)
 
@@ -63,4 +66,8 @@ by `server/src/lib/budget.ts`).
 - Purchase through us (marketplace)
 - Wedding website / save-the-date
 - Actual vs estimated budget tracking
-- Server endpoints that require the Supabase **service role** (admin / cross-user reads)
+- Server endpoints that require the Supabase **service role** (admin /
+  cross-user reads). The Phase 1 `/admin` route is a placeholder only —
+  it gates on `profiles.is_admin` and never bypasses RLS. Real admin
+  features (vendor CRUD, wizard-question editing, cross-user user
+  lists) require the service-role exception, deliberately deferred.

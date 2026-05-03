@@ -1,10 +1,11 @@
 ---
-globs: ["client/**/*.styles.ts", "client/**/*.tsx", "client/tailwind.config.ts", "client/src/index.css"]
+globs: ["client/**/*.styles.ts", "client/**/*.tsx", "client/src/index.css", "client/src/styles/style.css"]
 ---
 
 # Styling (client)
 
-- Tokens: `ink`, `bone`, `muted`, `line`, `tracking-luxe` — see `client/tailwind.config.ts`.
-- Mobile-first breakpoints. Black / white minimal luxury.
-- Avoid raw hex in components; use tokens.
-- Keep focus styles visible for accessibility.
+- **Global stylesheet:** `client/src/styles/style.css` — design tokens (`:root` `--wh-*`) and app-wide `wh-*` classes (shells, buttons, wizard, dashboard, auth, landing, budget, admin).
+- **Per-component aliases:** each `*.styles.ts` file exports semantic names that map **only** to `wh-*` classes from `style.css` (plus multiple classes like `wh-field-input wh-field-input-sm` when needed).
+- Typography and layout primitives are spelled out as plain CSS utilities (e.g. `wh-dash-eyebrow`, `wh-text-muted-sm`); there is **no Tailwind**.
+- Palette: ink / bone / muted / dark surfaces (`--wh-ink`, `--wh-bone`, `--wh-muted`, `--wh-line`). Mobile-first media queries mirror the former Tailwind breakpoints.
+- Keep `:focus-visible` affordances consistent with `.wh-btn-base:focus-visible`, `.wh-opt-root:focus-visible`, etc.

@@ -3,7 +3,7 @@
 Wedding-budget **MVP** (Phase 1): email/password auth, onboarding wizard, venue estimate dashboard.
 
 ## Packages
-- **`client/`** — Vite + React 19 + TypeScript + Tailwind. SPA with React Router. Auth (`supabase.auth.*`) in the browser; **all data calls go through the server** via `client/src/shared/lib/api.ts`.
+- **`client/`** — Vite + React 19 + TypeScript + global CSS (`wh-*` classes). SPA with React Router. Auth (`supabase.auth.*`) in the browser; **all data calls go through the server** via `client/src/shared/lib/api.ts`.
 - **`server/`** — Next.js 15 (App Router). Data gateway between the SPA and Supabase. Endpoints: `GET /api/health`, `GET /api/openapi.json`, `POST /api/profiles`, `GET /api/budget`, `PUT /api/budget`. Uses Supabase **anon** key + the user's forwarded JWT — RLS still applies.
 - **`packages/shared/`** — `@wedding-hall/shared`. Cross-package types (`Profile`, `WeddingBudget`, payloads) and the venue tier prices. Single source of truth for both client and server.
 - **`supabase/`** — Postgres schema + RLS + seed (`schema.sql`, `seed.sql`).

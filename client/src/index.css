@@ -1,26 +1,2 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  color-scheme: dark;
-}
-
-html,
-body {
-  background-color: #000;
-  color: #fff;
-}
-
-body {
-  font-feature-settings: "ss01", "cv01";
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-input,
-button,
-textarea,
-select {
-  font: inherit;
-}
+@import "./styles/style.css";
+@import "./styles/stitch-overrides.css";

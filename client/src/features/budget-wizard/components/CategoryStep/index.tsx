@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/Button";
 import { Field } from "@/shared/components/Field";
 import { OptionCard } from "@/shared/components/OptionCard";
+import * as optionStyles from "@/shared/components/OptionCard/OptionCard.styles";
 import { WizardLayout } from "@/shared/components/WizardLayout";
 import {
   formatILS,
@@ -23,6 +24,11 @@ import {
   urlFor,
   type WizardStepId,
 } from "@/features/budget-wizard/state/steps";
+import {
+  choicesLayoutFromCount,
+  wizardOptLayoutClass,
+} from "@/features/budget-wizard/lib/wizard-option-layout";
+import { WizardChoiceRow } from "@/features/budget-wizard/components/WizardChoiceRow";
 
 type Props = {
   stepId: WizardStepId;
@@ -31,14 +37,126 @@ type Props = {
 
 function priceLabel(opt: TierOption, guestCount: number): string | undefined {
   if (opt.skip) return "₪0";
-  if (opt.custom) return "Your price";
+  if (opt.custom) return "המחיר שלכם";
   if (typeof opt.pricePerGuest === "number") {
-    return `${formatILS(opt.pricePerGuest * guestCount)} total`;
+    return `${formatILS(opt.pricePerGuest * guestCount)} סה״כ`;
   }
   if (typeof opt.flatPrice === "number") {
     return formatILS(opt.flatPrice);
   }
   return undefined;
+}
+
+function venueTierPriceLine(opt: TierOption): string | undefined {
+  if (opt.skip) return "₪0";
+  if (opt.custom) return undefined;
+  if (typeof opt.pricePerGuest === "number") {
+    return `${formatILS(opt.pricePerGuest)} לאורח`;
+  }
+  if (typeof opt.flatPrice === "number") return formatILS(opt.flatPrice);
+  return undefined;
+}
+
+const VENUE_STITCH_BANNER_IMG =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuArtZ0Vf7J9IPO85n-62NHWmWw5l1kGj3lyS_FxtCPaJlVH-kWXbY54lCD5yf0KkaceSZKK89UTpV7ipuv_lPrWB1SmUmFMRqEFnGiBEfTXSue-bMXizudHg25OsEuQX0iLlbCnBWmvLLmv402zJ0xHLie4gAcfvtonTg1OOeMPT-XwToP13LtJ89uTroW2jASQd1WfFgQG_BVhGNlupT-XIOdwNdwnY1t43AZF31klnbwCpymF7lRGXaoLxFQpkCwXbMOBaX62fR4";
+
+const VENUE_TIER_STITCH_HINTS: Record<string, string> = {
+  cheap: "מתאים לאירועים אינטימיים וקלאסיים בתקציב נוח",
+  average: "האיזון המושלם בין איכות למחיר, הבחירה הפופולרית ביותר",
+  premium: "אירוע יוקרתי עם דגש על הפרטים הקטנים ביותר",
+  custom: "בחרו את התקציב המדויק שמתאים לכם",
+};
+
+const VENUE_TIER_BENTO: Record<
+  string,
+  {
+    icon: string;
+    tone: "sage" | "honey" | "blue" | "muted";
+    recommended?: boolean;
+  }
+> = {
+  cheap: { icon: "savings", tone: "sage" },
+  average: { icon: "stars", tone: "honey", recommended: true },
+  premium: { icon: "diamond", tone: "blue" },
+  custom: { icon: "edit_note", tone: "muted" },
+};
+
+type VenueCustomTierCardProps = {
+  selected: boolean;
+  price: number | "";
+  hint: string;
+  onActivate: () => void;
+  onPriceChange: (v: number | "") => void;
+};
+
+function VenueCustomTierCard({
+  selected,
+  price,
+  hint,
+  onActivate,
+  onPriceChange,
+}: VenueCustomTierCardProps) {
+  return (
+    <div
+      className={[
+        optionStyles.root,
+        "wh-opt-bento",
+        "wh-opt-bento--static",
+        selected ? optionStyles.rootSelected : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      role="group"
+      aria-label="מחיר מותאם אישית לאורח"
+      onClick={() => {
+        onActivate();
+      }}
+    >
+      <div className="wh-opt-bento-icon-wrap wh-opt-bento-icon-wrap--muted">
+        <span className="material-symbols-outlined" aria-hidden>
+          edit_note
+        </span>
+      </div>
+      <span className="wh-opt-bento-main-col">
+        <span className={`${optionStyles.label} wh-opt-bento-title`}>
+          מותאם אישית
+        </span>
+        <div
+          className="wh-opt-bento-custom-wrap"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            id="venue-custom-price-stitch"
+            className="wh-opt-bento-custom-input"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            placeholder="הזן מחיר"
+            aria-label="מחיר לאורח בשקלים"
+            value={price === "" ? "" : String(price)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const v = raw === "" ? "" : Math.max(0, Number(raw));
+              onPriceChange(v === "" ? "" : v);
+            }}
+            onFocus={() => {
+              onActivate();
+            }}
+          />
+          <span className="wh-opt-bento-custom-suffix" aria-hidden>
+            ₪
+          </span>
+        </div>
+        <span className={`${optionStyles.hint} wh-opt-bento-hint`}>{hint}</span>
+      </span>
+      <span className="wh-opt-bento-tail" aria-hidden>
+        <span className="material-symbols-outlined wh-opt-bento-tail-ico">
+          check
+        </span>
+      </span>
+    </div>
+  );
 }
 
 export function CategoryStep({ stepId, category }: Props) {
@@ -182,27 +300,112 @@ export function CategoryStep({ stepId, category }: Props) {
   // ----- Body ----------------------------------------------------------
   let body: React.ReactNode = null;
   if (category.template === "tier" && category.tiers) {
+    const isVenueStitch = category.id === "venue";
+
+    const tierChoiceNodes = category.tiers.map((opt) => {
+      const selected =
+        current?.kind === "tier"
+          ? current.optionId === opt.id
+          : current?.kind === "skip" && opt.skip
+            ? true
+            : false;
+
+      if (isVenueStitch && opt.custom) {
+        return (
+          <VenueCustomTierCard
+            key={opt.id}
+            selected={selected}
+            price={customPrice}
+            hint={VENUE_TIER_STITCH_HINTS.custom}
+            onActivate={() => chooseTier(opt)}
+            onPriceChange={(val) => {
+              setCustomPrice(val);
+              setSelection(category.id, {
+                kind: "tier",
+                optionId: opt.id,
+                customPrice:
+                  typeof val === "number" && val > 0 ? val : undefined,
+                customLabel: customLabel.trim() || undefined,
+              });
+            }}
+          />
+        );
+      }
+
+      if (isVenueStitch) {
+        const bento = VENUE_TIER_BENTO[opt.id] ?? {
+          icon: "star",
+          tone: "sage" as const,
+        };
+        return (
+          <OptionCard
+            key={opt.id}
+            label={opt.label}
+            hint={VENUE_TIER_STITCH_HINTS[opt.id] ?? opt.hint}
+            priceLabel={venueTierPriceLine(opt)}
+            selected={selected}
+            onSelect={() => chooseTier(opt)}
+            variant="bento"
+            icon={bento.icon}
+            iconTone={bento.tone}
+            recommended={bento.recommended}
+          />
+        );
+      }
+
+      return (
+        <OptionCard
+          key={opt.id}
+          label={opt.label}
+          hint={opt.hint}
+          priceLabel={priceLabel(opt, guestMid)}
+          selected={selected}
+          onSelect={() => chooseTier(opt)}
+        />
+      );
+    });
+
     body = (
       <>
-        {category.tiers.map((opt) => {
-          const selected =
-            current?.kind === "tier"
-              ? current.optionId === opt.id
-              : current?.kind === "skip" && opt.skip
-                ? true
-                : false;
-          return (
-            <OptionCard
-              key={opt.id}
-              label={opt.label}
-              hint={opt.hint}
-              priceLabel={priceLabel(opt, guestMid)}
-              selected={selected}
-              onSelect={() => chooseTier(opt)}
-            />
-          );
-        })}
-        {current?.kind === "tier" &&
+        {isVenueStitch ? (
+          <>
+            <WizardChoiceRow variant="bento" legend="בחירת רמת מחיר לאולם">
+              {tierChoiceNodes}
+            </WizardChoiceRow>
+            <aside className="wh-wizard-venue-price-tip">
+              <span className="material-symbols-outlined" aria-hidden>
+                info
+              </span>
+              <p>
+                מחירי המנות כוללים בדרך כלל את שכירות המקום, עיצוב בסיסי
+                ושירותי מלצרות. מומלץ להוסיף כ־15% לבלת״מים.
+              </p>
+            </aside>
+          </>
+        ) : (
+          <div
+            className={wizardOptLayoutClass}
+            data-layout={choicesLayoutFromCount(category.tiers.length)}
+          >
+            {tierChoiceNodes}
+          </div>
+        )}
+        {isVenueStitch &&
+          current?.kind === "tier" &&
+          category.tiers.find((t) => t.id === current.optionId)?.custom && (
+            <div className="wh-step-date-extra">
+              <Field
+                id="custom-label"
+                label="שם האולם (אופציונלי)"
+                type="text"
+                value={customLabel}
+                onChange={(e) => setCustomLabel(e.target.value)}
+                onBlur={() => persistCustom()}
+              />
+            </div>
+          )}
+        {!isVenueStitch &&
+          current?.kind === "tier" &&
           category.tiers.find((t) => t.id === current.optionId)?.custom && (
             <CustomPriceInputs
               showLabel={category.id === "venue"}
@@ -213,11 +416,28 @@ export function CategoryStep({ stepId, category }: Props) {
               perGuest={category.id === "venue"}
             />
           )}
+        {isVenueStitch ? (
+          <section
+            className="wh-wizard-stitch-venue-banner"
+            aria-label="המשך התכנון"
+          >
+            <img
+              className="wh-wizard-stitch-venue-banner-img"
+              src={VENUE_STITCH_BANNER_IMG}
+              alt="אולם אירועים מעוצב"
+              loading="lazy"
+            />
+            <div className="wh-wizard-stitch-venue-banner-caption">
+              <h3>האולם החלומי שלכם מחכה</h3>
+              <p>הגדירו תקציב ונתחיל בחיפוש</p>
+            </div>
+          </section>
+        ) : null}
       </>
     );
   } else if (category.template === "yes_no" && category.tiers) {
     body = (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className={wizardOptLayoutClass} data-layout="toggle">
         {category.tiers.map((opt) => {
           const selected =
             current?.kind === "yes_no" &&
@@ -237,7 +457,10 @@ export function CategoryStep({ stepId, category }: Props) {
     );
   } else if (category.template === "multi_select" && category.items) {
     body = (
-      <>
+      <div
+        className={wizardOptLayoutClass}
+        data-layout={choicesLayoutFromCount(category.items.length)}
+      >
         {category.items.map((item) => {
           const selected =
             current?.kind === "multi_select" && current.itemIds.includes(item.id);
@@ -257,17 +480,20 @@ export function CategoryStep({ stepId, category }: Props) {
             />
           );
         })}
-      </>
+      </div>
     );
   } else if (category.template === "multi_tier" && category.groups) {
     body = (
       <>
         {category.groups.map((group) => (
-          <section key={group.id} className="mt-2 first:mt-0">
-            <h3 className="mb-3 text-[10px] uppercase tracking-luxe text-muted">
+          <section key={group.id} className="wh-cat-group-wrap">
+            <h3 className="wh-cat-group-heading">
               {group.label}
             </h3>
-            <div className="flex flex-col gap-3">
+            <div
+              className={wizardOptLayoutClass}
+              data-layout={choicesLayoutFromCount(group.options.length)}
+            >
               {group.options.map((opt) => {
                 const selected =
                   current?.kind === "multi_tier" &&
@@ -308,15 +534,7 @@ export function CategoryStep({ stepId, category }: Props) {
   // ----- Footer --------------------------------------------------------
   const footer = (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={handleBack}
-        size="md"
-      >
-        Back
-      </Button>
-      <div className="flex items-center gap-3">
+      <div className="wh-wizard-stitch-footer-actions">
         {category.skippable && current !== undefined && (
           <Button
             type="button"
@@ -328,7 +546,7 @@ export function CategoryStep({ stepId, category }: Props) {
               setCustomLabel("");
             }}
           >
-            Clear
+            ניקוי
           </Button>
         )}
         {category.skippable && (
@@ -338,7 +556,7 @@ export function CategoryStep({ stepId, category }: Props) {
             onClick={handleSkip}
             size="md"
           >
-            Skip
+            דילוג
           </Button>
         )}
         <Button
@@ -347,27 +565,58 @@ export function CategoryStep({ stepId, category }: Props) {
           onClick={handleNext}
           disabled={!canAdvance}
           size="lg"
+          className="wh-wizard-stitch-next"
         >
-          Continue
+          המשך
+          <span className="material-symbols-outlined" aria-hidden>
+            arrow_back
+          </span>
         </Button>
       </div>
+      <button
+        type="button"
+        className="wh-wizard-stitch-back"
+        onClick={handleBack}
+      >
+        <span className="material-symbols-outlined" aria-hidden>
+          arrow_forward
+        </span>
+        חזור
+      </button>
     </>
   );
 
+  const isVenueTierStep =
+    category.id === "venue" && category.template === "tier";
+
   return (
     <WizardLayout
+      currentStepId={stepId}
       stepNumber={stepNumber(stepId)}
       totalSteps={TOTAL_STEPS}
-      eyebrow={`Step ${stepNumber(stepId)} — ${category.title}`}
-      title={category.title}
-      subtitle={category.subtitle}
+      title={
+        isVenueTierStep
+          ? "איזו רמת מחיר אתם מחפשים לאולם?"
+          : category.title
+      }
+      subtitle={
+        isVenueTierStep
+          ? "הבחירה שלכם תעזור לנו לדייק את הצעות המחיר והספקים שיוצגו לכם."
+          : category.subtitle
+      }
       info={category.info}
       footer={footer}
       showSummary
       runningTotal={total}
       summaryLines={totalLines}
     >
-      {body}
+      <div
+        className={
+          isVenueTierStep ? "wh-wizard-body wh-wizard-body--stitch-tier" : undefined
+        }
+      >
+        {body}
+      </div>
     </WizardLayout>
   );
 }
@@ -390,10 +639,10 @@ function CustomPriceInputs({
   perGuest,
 }: CustomProps) {
   return (
-    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="wh-custom-grid">
       <Field
         id="custom-price"
-        label={perGuest ? "Price per guest (₪)" : "Total price (₪)"}
+        label={perGuest ? "מחיר לאורח (₪)" : "מחיר כולל (₪)"}
         type="number"
         inputMode="numeric"
         min={1}
@@ -407,7 +656,7 @@ function CustomPriceInputs({
       {showLabel && onLabel && (
         <Field
           id="custom-label"
-          label="Venue name (optional)"
+          label="שם האולם (אופציונלי)"
           type="text"
           value={label ?? ""}
           onChange={(e) => onLabel(e.target.value)}

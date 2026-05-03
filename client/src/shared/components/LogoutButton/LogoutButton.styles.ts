@@ -1,1 +1,1 @@
-export const wrap = "inline-flex";
+export const wrap = "wh-logout-wrap";
