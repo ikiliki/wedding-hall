@@ -37,7 +37,7 @@ function budgetGet() {
 function budgetPut() {
   return http.put(
     `${STORYBOOK_SERVER_ORIGIN}/api/budget`,
-    async ({ request }) => {
+    async ({ request }: { request: Request }) => {
       await request.text();
       return HttpResponse.json({ budget: structuredClone(budgetState) });
     },
@@ -47,7 +47,7 @@ function budgetPut() {
 function postProfiles(isAdminProfile: boolean) {
   return http.post(
     `${STORYBOOK_SERVER_ORIGIN}/api/profiles`,
-    async ({ request }) => {
+    async ({ request }: { request: Request }) => {
       let payload: UpsertProfilePayload | undefined;
       try {
         payload = (await request.json()) as UpsertProfilePayload;
