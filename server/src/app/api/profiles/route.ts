@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { UpsertProfilePayload } from "@wedding-hall/shared";
 import { corsPreflight, withCors } from "@/lib/cors";
-import { supabaseForRequest, supabaseServiceRole } from "@/lib/supabase";
+import { supabaseForRequest } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -67,19 +67,19 @@ export async function POST(request: Request) {
     );
   }
 
-  // Derive is_admin from admin_users table (service role, so RLS is bypassed).
-  // Failure is non-fatal: fall back to false so the profile upsert still succeeds.
+  // Derive is_admin from admin_users using the caller's JWT. RLS policy
+  // admin_users_select_own allows each user to read their own row — no service
+  // role required (avoids false negatives when Vercel lacks SUPABASE_SERVICE_ROLE_KEY).
   let is_admin = false;
-  try {
-    const adminDb = supabaseServiceRole();
-    const { data: adminRow } = await adminDb
-      .from("admin_users")
-      .select("user_id")
-      .eq("user_id", auth.user.id)
-      .maybeSingle();
+  const { data: adminRow, error: adminErr } = await auth.supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+  if (adminErr) {
+    console.error("POST /api/profiles admin_users lookup", adminErr);
+  } else {
     is_admin = !!adminRow;
-  } catch {
-    // service role key not configured in this environment — admin = false
   }
 
   return withCors(request, NextResponse.json({ profile: { ...data, is_admin } }));

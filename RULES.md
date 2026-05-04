@@ -23,7 +23,7 @@ Membership lives in `public.admin_users`. Add an admin by inserting a row:
 insert into public.admin_users (user_id) values ('<uuid>');
 ```
 
-The `POST /api/profiles` endpoint derives `is_admin` by checking `admin_users` via service role. The existing `AdminGate` component reads `profile.is_admin` and requires no change.
+The `POST /api/profiles` endpoint derives `is_admin` by reading the caller’s own row in `admin_users` with the forwarded JWT (RLS `admin_users_select_own`). Vendor admin routes still require `SUPABASE_SERVICE_ROLE_KEY` after `requireAdmin()` passes.
 
 ## UX & quality
 

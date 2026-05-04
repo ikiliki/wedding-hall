@@ -176,6 +176,12 @@ export async function saveBudget(
   return data.budget;
 }
 
+/** Active vendors for the authenticated couple (RLS). */
+export async function fetchPublicVendors(): Promise<Vendor[]> {
+  const data = await request<{ vendors: Vendor[] }>("/api/vendors");
+  return data.vendors;
+}
+
 // ---------- Admin: Vendor categories ----------
 
 export async function fetchAdminCategories(): Promise<VendorCategory[]> {

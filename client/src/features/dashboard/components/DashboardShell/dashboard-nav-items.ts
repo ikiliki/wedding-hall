@@ -12,12 +12,7 @@ export type DashboardNavItem = Readonly<{
 export const DASH_NAV_ITEMS: readonly DashboardNavItem[] = [
   { to: "/dashboard", label: "בית", end: true, icon: "home" },
   { to: "/budget", label: "ניהול תקציב", icon: "account_balance_wallet" },
-  {
-    to: "/dashboard/vendors",
-    label: "ספקים",
-    comingSoon: "בקרוב",
-    icon: "groups",
-  },
+  { to: "/dashboard/vendors", label: "ספקים", icon: "groups" },
   {
     to: "/dashboard/purchase",
     label: "רכישות",

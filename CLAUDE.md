@@ -53,6 +53,8 @@ All skills live under [`.claude/skills/`](./.claude/skills/) and are available a
 - [`manual-vercel-supabase-runbook`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for things only the user can do (Vercel env vars, redeploys, redirect URLs, RLS sanity checks, schema migrations).
 - [`supabase-production-reset-cli`](./.claude/skills/supabase-production-reset-cli/SKILL.md) — Supabase CLI `db query` + MCP to export URL/keys; account token + DB password for `link` (not anon key).
 - [`supabase-e2e-test-data-cleanup`](./.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md) — delete Playwright prod E2E users (`wh-e2e-%`); MCP `execute_sql` or `npm run supabase:cleanup-e2e-users`.
+- [`wedding-hall-e2e-admin-vendor-flow`](./.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md) — grant admin + Playwright admin/vendor/couple flow on production.
+- [`wedding-hall-e2e-docker-flow`](./.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md) — same prod E2E specs against local **`docker compose`** (`test:e2e:docker`).
 - [`wedding-hall-pr-workflow`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit conventions, PR body template, finishing checklist.
 - [`mobile-responsive-css`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, breakpoint set, popover/stack/long-text patterns, per-component checklist. Read before adding any new `wh-*` class or fixing a "looks weird on my phone" report.
 - [`local-docker-stack`](./.claude/skills/local-docker-stack/SKILL.md) — full app on `docker compose`.

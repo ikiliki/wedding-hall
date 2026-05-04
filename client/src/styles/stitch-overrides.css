@@ -3921,3 +3921,43 @@ body {
 .wh-vendor-cancel:hover:not(:disabled) {
   background: var(--stl-surface-hover);
 }
+
+/* Dashboard — couple-facing vendor directory (/dashboard/vendors) */
+.wh-dash-vendor-browse {
+  width: 100%;
+  max-inline-size: min(40rem, 100%);
+  margin-inline: auto;
+}
+
+.wh-dash-vendor-browse-title {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.wh-dash-vendor-browse-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wh-dash-vendor-browse-card {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--stl-border);
+  background: var(--stl-surface);
+  text-align: right;
+}
+
+.wh-dash-vendor-browse-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--stl-outline);
+}

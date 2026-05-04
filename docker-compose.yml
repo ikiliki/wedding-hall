@@ -245,6 +245,8 @@ services:
       # the well-known dev anon key (matches `auth` / `rest` JWT secret).
       SUPABASE_URL: http://gateway:8000
       SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6IndlZGRpbmctaGFsbC1sb2NhbCIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxNzk5NTM1NjAwfQ.JxejbUaxXmfGDcu7-FsaoReqSHXWG1CRnKUwq06VX3o
+      # Same JWT as Studio `SUPABASE_SERVICE_KEY` — admin vendor POST `/api/admin/vendors` only (local dev).
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoid2VkZGluZy1oYWxsLWxvY2FsIiwiaWF0IjoxNjQxNzY5MjAwLCJleHAiOjE3OTk1MzU2MDB9.-XtWcvIKEMGd54AScK2_CrZ9-a3y29tummnmCYwUn7g
       CLIENT_ORIGIN: http://localhost:5173
     volumes:
       - ./server:/repo/server

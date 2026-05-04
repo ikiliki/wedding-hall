@@ -18,28 +18,15 @@ export async function requireAdmin(request: Request): Promise<AdminAuth> {
   const auth = await supabaseForRequest(request);
   if (!auth.ok) return auth;
 
-  let adminDb: SupabaseClient;
-  try {
-    adminDb = supabaseServiceRole();
-  } catch (err) {
-    console.error("requireAdmin: service role not configured", err);
-    return {
-      ok: false,
-      response: withCors(
-        request,
-        NextResponse.json({ error: "Admin service not configured." }, { status: 503 }),
-      ),
-    };
-  }
-
-  const { data, error } = await adminDb
+  // Membership check with the caller JWT — RLS allows selecting own admin_users row.
+  const { data, error } = await auth.supabase
     .from("admin_users")
     .select("user_id")
     .eq("user_id", auth.user.id)
     .maybeSingle();
 
   if (error) {
-    console.error("requireAdmin: db error", error);
+    console.error("requireAdmin: admin_users lookup failed", error);
     return {
       ok: false,
       response: withCors(
@@ -55,6 +42,20 @@ export async function requireAdmin(request: Request): Promise<AdminAuth> {
       response: withCors(
         request,
         NextResponse.json({ error: "Forbidden." }, { status: 403 }),
+      ),
+    };
+  }
+
+  let adminDb: SupabaseClient;
+  try {
+    adminDb = supabaseServiceRole();
+  } catch (err) {
+    console.error("requireAdmin: service role not configured", err);
+    return {
+      ok: false,
+      response: withCors(
+        request,
+        NextResponse.json({ error: "Admin service not configured." }, { status: 503 }),
       ),
     };
   }

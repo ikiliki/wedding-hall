@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import type { WeddingBudget } from "@wedding-hall/shared";
 import { BudgetSummary } from "@/features/dashboard/components/BudgetSummary";
 import { DashboardShell } from "@/features/dashboard/components/DashboardShell";
+import { VendorBrowsePage } from "@/features/dashboard/pages/VendorBrowsePage";
 import { RequireAuth } from "@/shared/components/RequireAuth";
 import { ApiError, fetchBudget } from "@/shared/lib/api";
 
@@ -77,7 +78,10 @@ export function DashboardContent() {
 export function DashboardPage() {
   return (
     <RequireAuth>
-      <DashboardContent />
+      <Routes>
+        <Route index element={<DashboardContent />} />
+        <Route path="vendors" element={<VendorBrowsePage />} />
+      </Routes>
     </RequireAuth>
   );
 }

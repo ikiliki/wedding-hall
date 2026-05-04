@@ -16,6 +16,16 @@ Tests live in [`wizard-new-user.spec.ts`](./wizard-new-user.spec.ts). Run agains
    | `E2E_USER2_EMAIL` | Yes | Second account — **must differ** from user 1 |
    | `E2E_USER2_PASSWORD` | Yes | Password for user 2 |
 
+**Admin + vendor directory test** ([`admin-vendor-public.spec.ts`](./admin-vendor-public.spec.ts)) additionally needs:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `E2E_ADMIN_EMAIL` | For that spec | Existing Auth user you will grant `admin_users` |
+| `E2E_ADMIN_PASSWORD` | For that spec | Password for that admin |
+| `E2E_AUTO_GRANT_ADMIN` | Optional | Set to `1` to run `npm run e2e:grant-admin` from Playwright `beforeAll` (needs `supabase link`) |
+
+Before first run, grant admin: `$env:E2E_ADMIN_EMAIL="..."; npm run e2e:grant-admin` — see [`.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md`](../../.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md).
+
 2. **Email confirmation (critical)**  
    In Supabase Dashboard → Authentication → Providers → Email: if **Confirm email** is enabled, `signUp` often returns **no session** until the user clicks the magic link. The app then shows “check your email” and **does not** return to the wizard automatically. For this flow to pass unattended, either:
 
@@ -25,7 +35,17 @@ Tests live in [`wizard-new-user.spec.ts`](./wizard-new-user.spec.ts). Run agains
 3. **Two distinct users**  
    You cannot register the same email twice. Use plus-addressing if your provider supports it (e.g. `test+pw1@example.com`, `test+pw2@example.com`).
 
-## Command
+## Docker (local full stack)
+
+When production is not deployed, run the **same specs** against **`docker compose`** with a separate Playwright config:
+
+1. Bring the stack up (see [`.claude/skills/local-docker-stack/SKILL.md`](../../.claude/skills/local-docker-stack/SKILL.md)).
+2. Set env vars — defaults for admin are **`admin@weddinghall.app` / `Admin!2026`** from `supabase/seed.sql`; use **unique** `E2E_USER{1,2}_EMAIL` values per run for signup tests.
+3. **`npm run test:e2e:docker`** (not `test:e2e:prod`).
+
+Full steps: [`.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md`](../../.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md).
+
+## Command (production URL)
 
 From the repository root:
 

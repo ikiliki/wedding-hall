@@ -8,7 +8,7 @@ export function buildOpenApi(origin: string): OpenApiDocument {
     openapi: "3.1.0",
     info: {
       title: "Wedding Hall API",
-      version: "0.2.0",
+      version: "0.2.1",
       description:
         "Server-side endpoints for the Wedding Hall MVP. The browser still " +
         "talks to Supabase Auth directly for sign-in / sign-up; data writes " +
@@ -28,6 +28,10 @@ export function buildOpenApi(origin: string): OpenApiDocument {
       { name: "system", description: "Service health and metadata." },
       { name: "profiles", description: "Authenticated user profile." },
       { name: "budgets", description: "Authenticated user's wedding budget." },
+      {
+        name: "vendors",
+        description: "Active vendor catalog for authenticated couples (read-only).",
+      },
     ],
     paths: {
       "/api/health": {
@@ -175,6 +179,35 @@ export function buildOpenApi(origin: string): OpenApiDocument {
             "400": { $ref: "#/components/responses/ValidationError" },
             "401": { $ref: "#/components/responses/Unauthorized" },
             "503": { $ref: "#/components/responses/TablesMissing" },
+          },
+        },
+      },
+      "/api/vendors": {
+        get: {
+          tags: ["vendors"],
+          summary: "List active vendors",
+          description:
+            "Returns active vendors with categories. Uses the caller's JWT; RLS limits to public catalog.",
+          operationId: "listPublicVendors",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            "200": {
+              description: "Vendor rows.",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      vendors: {
+                        type: "array",
+                        items: { type: "object" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "401": { $ref: "#/components/responses/Unauthorized" },
           },
         },
       },
