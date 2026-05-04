@@ -51,9 +51,11 @@ If a request would expand `PLAN.md` (vendors, marketplace, admin cross-user read
 All skills live under [`.claude/skills/`](./.claude/skills/) and are available as slash commands:
 
 - [`manual-vercel-supabase-runbook`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for things only the user can do (Vercel env vars, redeploys, redirect URLs, RLS sanity checks, schema migrations).
+- [`supabase-production-reset-cli`](./.claude/skills/supabase-production-reset-cli/SKILL.md) — production DB reset script via `psql` + `DATABASE_URL` (keep `vendor_categories`).
 - [`wedding-hall-pr-workflow`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit conventions, PR body template, finishing checklist.
 - [`mobile-responsive-css`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, breakpoint set, popover/stack/long-text patterns, per-component checklist. Read before adding any new `wh-*` class or fixing a "looks weird on my phone" report.
 - [`local-docker-stack`](./.claude/skills/local-docker-stack/SKILL.md) — full app on `docker compose`.
+- [`storybook-docker-playwright`](./.claude/skills/storybook-docker-playwright/SKILL.md) — Storybook in Docker (preview/MSW failures, volume refresh), Playwright smoke tests.
 - [`wedding-hall-deploy`](./.claude/skills/wedding-hall-deploy/SKILL.md) — branches, Vercel, Supabase redirect checklist.
 - [`wedding-hall-env-bootstrap`](./.claude/skills/wedding-hall-env-bootstrap/SKILL.md) — `npm run env:local|cloud|push-vercel`.
 - [`wedding-hall-budget-flow`](./.claude/skills/wedding-hall-budget-flow/SKILL.md) — adding a new wizard category, changing prices, debugging totals.

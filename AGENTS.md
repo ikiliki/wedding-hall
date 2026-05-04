@@ -51,9 +51,11 @@ All skills live under [`.claude/skills/`](./.claude/skills/):
 - [`.claude/skills/wedding-hall-deploy/SKILL.md`](./.claude/skills/wedding-hall-deploy/SKILL.md) — branches, Vercel, Supabase redirect checklist.
 - [`.claude/skills/wedding-hall-env-bootstrap/SKILL.md`](./.claude/skills/wedding-hall-env-bootstrap/SKILL.md) — `npm run env:local|cloud|push-vercel`.
 - [`.claude/skills/local-docker-stack/SKILL.md`](./.claude/skills/local-docker-stack/SKILL.md) — full app on `docker compose`.
+- [`.claude/skills/storybook-docker-playwright/SKILL.md`](./.claude/skills/storybook-docker-playwright/SKILL.md) — Storybook Docker refresh (stale volumes / MSW preview), `npm run test:storybook`.
 - [`.claude/skills/wedding-hall-budget-flow/SKILL.md`](./.claude/skills/wedding-hall-budget-flow/SKILL.md) — adding a new wizard category, changing prices, debugging totals.
 - [`.claude/skills/wedding-hall-signup-debug/SKILL.md`](./.claude/skills/wedding-hall-signup-debug/SKILL.md) — runbook for "email already registered" / orphaned `auth.users` rows / signup-flow bugs.
 - [`.claude/skills/mobile-responsive-css/SKILL.md`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, per-component checklist.
 - [`.claude/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for Vercel/Supabase dashboard actions.
+- [`.claude/skills/supabase-production-reset-cli/SKILL.md`](./.claude/skills/supabase-production-reset-cli/SKILL.md) — run `production-reset-keep-categories.sql` with `psql` from the CLI.
 - [`.claude/skills/wedding-hall-pr-workflow/SKILL.md`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit format, PR template.
 - [`.claude/skills/admin-vendor-management/SKILL.md`](./.claude/skills/admin-vendor-management/SKILL.md) — admin_users table, vendor catalog, service-role setup, photo upload, category-wizard linking.
