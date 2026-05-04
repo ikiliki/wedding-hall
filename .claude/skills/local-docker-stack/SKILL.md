@@ -36,6 +36,8 @@ Then open:
 - Supabase API → <http://localhost:54321/rest/v1/wedding_budgets?select=id> (anon should get `[]`)
 - **Supabase Studio** → <http://localhost:54323> — browse tables, run SQL, inspect auth users
 
+The `seed` service runs **`supabase/schema.sql` first** (Phase 2 vendor tables + `admin_users`), then `seed.sql`, then `fix-prod-and-seed-demo-user.sql`.
+
 ## How requests flow
 
 1. Browser → `http://localhost:54321/auth/v1/*` for sign-in (Supabase Auth via `gateway`).

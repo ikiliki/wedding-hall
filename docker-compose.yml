@@ -7,7 +7,7 @@
 #   gateway  nginx routing /auth/v1 + /rest/v1 onto port 54321
 #   meta     postgres-meta (table/schema inspector used by Studio)
 #   studio   Supabase Studio UI → http://localhost:54323
-#   seed     one-shot loader for supabase/seed.sql (creates demo user)
+#   seed     one-shot: schema.sql + seed.sql + demo helpers + PostgREST NOTIFY
 #   client     Vite dev server on http://localhost:5173
 #   storybook  Storybook on http://localhost:6006 (MSW mocks; no DB/server required)
 #   server     Next.js dev server on http://localhost:3001
@@ -152,9 +152,10 @@ services:
     environment:
       PGPASSWORD: postgres
     volumes:
+      - ./supabase/schema.sql:/schema.sql:ro
       - ./supabase/seed.sql:/seed.sql:ro
       - ./supabase/fix-prod-and-seed-demo-user.sql:/demo.sql:ro
-    # Apply seed (schema + users incl. admin@weddinghall.app) then demo.sql
+    # Canonical DDL (vendor_categories, vendors, admin_users, …) then seed.sql
     # (demo budget + omri repair + admin mock budget refresh), then NOTIFY
     # its schema cache. PostgREST boots before the tables exist, so without
     # this NOTIFY the first PUT to /api/budget returns "404 / empty body"
@@ -162,7 +163,7 @@ services:
     entrypoint:
       - sh
       - -c
-      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /demo.sql && psql -h db -U postgres -d postgres -c \"NOTIFY pgrst, 'reload schema';\" && echo '✓ Wedding Hall seeded'"
+      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /schema.sql && psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /demo.sql && psql -h db -U postgres -d postgres -c \"NOTIFY pgrst, 'reload schema';\" && echo '✓ Wedding Hall seeded'"
     restart: "no"
 
   client:
