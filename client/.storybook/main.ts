@@ -1,11 +1,24 @@
 import type { StorybookConfig } from "@storybook/react-vite";
+import fs from "node:fs";
 import path from "node:path";
 import { mergeConfig, type AliasOptions } from "vite";
+
+/** Hoisted vs nested `node_modules` (Docker volumes / npm workspaces). */
+function resolveNodeModuleDir(pkg: string): string {
+  const rootNm = path.resolve(__dirname, "../../node_modules", pkg);
+  const clientNm = path.resolve(__dirname, "../node_modules", pkg);
+  if (fs.existsSync(path.join(rootNm, "package.json"))) return rootNm;
+  if (fs.existsSync(path.join(clientNm, "package.json"))) return clientNm;
+  return rootNm;
+}
 
 const SUPABASE_MOCK = path.resolve(
   __dirname,
   "../src/storybook/mocks/supabase-client.ts",
 );
+
+/** Resolve workspace package to concrete `.ts` files so Vite never 403s parent-dir imports. */
+const SHARED_SRC = path.resolve(__dirname, "../../packages/shared/src");
 
 /** Same localhost anon key as `docker-compose` `client` / `storybook` (dev-only). */
 const FALLBACK_LOCAL_VITE_SUPABASE_ANON =
@@ -46,6 +59,30 @@ function mergeSupabaseStorybookAlias(existing: AliasOptions | undefined): AliasE
   return [
     { find: /^@\/shared\/lib\/supabase$/, replacement: SUPABASE_MOCK },
     { find: "@/shared/lib/supabase", replacement: SUPABASE_MOCK },
+    {
+      find: /^msw-storybook-addon$/,
+      replacement: resolveNodeModuleDir("msw-storybook-addon"),
+    },
+    { find: /^msw$/, replacement: resolveNodeModuleDir("msw") },
+    // Subpaths must precede the bare package name (longest match wins).
+    {
+      find: "@wedding-hall/shared/types",
+      replacement: path.join(SHARED_SRC, "types.ts"),
+    },
+    {
+      find: "@wedding-hall/shared/venue-pricing",
+      replacement: path.join(SHARED_SRC, "venue-pricing.ts"),
+    },
+    {
+      find: "@wedding-hall/shared/budget-catalog",
+      replacement: path.join(SHARED_SRC, "budget-catalog.ts"),
+    },
+    {
+      find: "@wedding-hall/shared/budget-selections",
+      replacement: path.join(SHARED_SRC, "budget-selections.ts"),
+    },
+    { find: /^@wedding-hall\/shared$/, replacement: path.join(SHARED_SRC, "index.ts") },
+    { find: "@wedding-hall/shared", replacement: path.join(SHARED_SRC, "index.ts") },
     ...rest,
   ];
 }
@@ -71,6 +108,9 @@ const config: StorybookConfig = {
           allow: [
             path.resolve(__dirname, ".."),
             path.resolve(__dirname, "../.."),
+            SHARED_SRC,
+            path.resolve(__dirname, "../../node_modules"),
+            path.resolve(__dirname, "../node_modules"),
             ...(userConfig.server?.fs?.allow ?? []),
           ],
         },

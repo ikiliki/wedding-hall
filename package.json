@@ -1,7 +1,11 @@
 {
   "name": "wedding-hall",
   "private": true,
-  "workspaces": ["client", "server", "packages/*"],
+  "workspaces": [
+    "client",
+    "server",
+    "packages/*"
+  ],
   "scripts": {
     "dev:client": "npm run dev -w wedding-hall-client",
     "dev:server": "npm run dev -w wedding-hall-server",
@@ -9,8 +13,14 @@
     "lint": "npm run lint -w wedding-hall-client && npm run lint -w wedding-hall-server",
     "storybook": "npm run storybook -w wedding-hall-client",
     "build-storybook": "npm run build-storybook -w wedding-hall-client",
+    "test:storybook": "playwright test",
     "env:local": "node scripts/setup-env.mjs --local",
     "env:cloud": "node scripts/setup-env.mjs --from-supabase",
     "env:push-vercel": "node scripts/setup-env.mjs --push-vercel"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "msw": "^2.7.3",
+    "msw-storybook-addon": "^2.0.7"
   }
 }

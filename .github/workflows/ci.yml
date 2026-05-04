@@ -28,6 +28,13 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: anon-key-for-ci-only
           VITE_SERVER_URL: http://localhost:3001
+      - run: npx playwright install chromium --with-deps
+      - run: npm run test:storybook
+        env:
+          CI: true
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: anon-key-for-ci-only
+          VITE_SERVER_URL: http://localhost:3001
 
   server:
     runs-on: ubuntu-latest

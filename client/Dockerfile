@@ -20,6 +20,11 @@ RUN npm install --no-audit --no-fund
 COPY packages/shared packages/shared
 COPY client client
 
+# Re-resolve workspaces after the full `client/` tree exists so devDependencies
+# (Storybook, MSW, etc.) are always linked into `/repo/node_modules` in the image.
+WORKDIR /repo
+RUN npm install --no-audit --no-fund
+
 WORKDIR /repo/client
 
 ENV HOST=0.0.0.0
