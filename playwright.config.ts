@@ -5,6 +5,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./tests",
+  /** Prod E2E lives in `e2e-prod/` and runs via `playwright.prod.config.ts`. */
+  testIgnore: /[/\\]e2e-prod[/\\]/,
   timeout: 120_000,
   fullyParallel: false,
   forbidOnly: !!process.env.CI,

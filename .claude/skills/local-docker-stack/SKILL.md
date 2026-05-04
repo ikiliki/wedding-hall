@@ -36,7 +36,7 @@ Then open:
 - Supabase API → <http://localhost:54321/rest/v1/wedding_budgets?select=id> (anon should get `[]`)
 - **Supabase Studio** → <http://localhost:54323> — browse tables, run SQL, inspect auth users
 
-The `seed` service runs **`supabase/schema.sql` first** (Phase 2 vendor tables + `admin_users`), then `seed.sql`, then `fix-prod-and-seed-demo-user.sql`.
+The `seed` service runs **`supabase/schema.sql` first** (Phase 2 vendor tables + `vendor_categories` + `admin_users`), then **`supabase/seed.sql`** (demo user + staff admin, ends with `NOTIFY pgrst` for PostgREST).
 
 ## How requests flow
 
@@ -44,16 +44,12 @@ The `seed` service runs **`supabase/schema.sql` first** (Phase 2 vendor tables +
 2. Browser → `http://localhost:3001/api/profiles` and `/api/budget` with `Authorization: Bearer <jwt>`.
 3. Server → `http://gateway:8000/auth/v1/user` (verify JWT) and `/rest/v1/...` (read/write with RLS as that user).
 
-## Demo logins (all seeded by `supabase/seed.sql`)
+## Demo logins (seeded by `supabase/seed.sql`)
 
-| Email | Password | is_admin |
+| Email | Password | `admin_users` |
 |---|---|---|
 | `test@gmail.com` | `test1234` | — |
-| `admin@weddinghall.app` | `Admin!2026` | ✓ |
-| `admin@test.com` | `123123` | ✓ |
-| `test1@test.com` | `123123` | — |
-| `test2@test.com` | `123123` | — |
-| `test3@test.com` | `123123` | — |
+| `admin@weddinghall.app` | `Admin!2026` | row (staff admin) |
 
 ## Common operations
 

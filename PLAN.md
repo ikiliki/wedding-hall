@@ -16,8 +16,8 @@ This plan governs what is in scope. New work must reference this file.
   - Venue price selection
 - Save budget to Supabase by `user_id` (via server)
 - Dashboard with saved estimate (via server)
-- `/admin` placeholder route, gated on `profiles.is_admin` (manually
-  flipped via SQL — see `.claude/skills/manual-vercel-supabase-runbook` step S6)
+- `/admin` route gated on admin membership (`public.admin_users`; exposed as
+  `profile.is_admin` from `POST /api/profiles` — see runbook step S6)
 
 ### Phase 1 routes (client — Vite dev server default port **5173**)
 
@@ -61,8 +61,8 @@ by `server/src/lib/budget.ts`).
 
 ## Phase 2 (current — admin vendors)
 
-- **`admin_users` table** — canonical source of admin membership. Replaces
-  `profiles.is_admin` flag. Server reads this via the service role.
+- **`admin_users` table** — canonical source of admin membership. Server reads
+  this via the service role.
 - **`vendor_categories` table** — taxonomy linked to wizard steps via
   `wizard_step_key` (matches `WizardStepId`).
 - **`vendors` table** — one row per vendor. Soft-deleted via `is_active`.

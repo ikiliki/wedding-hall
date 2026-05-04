@@ -17,7 +17,7 @@ Use when cutting a production release or fixing "works locally, broken in prod" 
 
 In **Authentication → URL configuration**:
 
-- **Site URL** = production client URL (e.g. `https://wedding-hall-client.vercel.app`).
+- **Site URL** = production client URL (e.g. `https://wedding-hall-gamma.vercel.app`).
 - **Redirect URLs** must include:
   - `http://localhost:5173/auth/callback`
   - `https://<production-client-host>/auth/callback`

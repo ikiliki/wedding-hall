@@ -30,15 +30,6 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
--- Phase 1+: admin flag. Default false so existing rows + new signups are
--- non-admin. Admins are flipped manually via SQL (see
--- `.claude-rules/skills/manual-vercel-supabase-runbook` step S6).
--- Cross-user reads still go through RLS — admins can only read their own
--- row through this column. Cross-user dashboards are deferred until we
--- agree on a service-role exception (see PLAN.md).
-alter table public.profiles
-  add column if not exists is_admin boolean not null default false;
-
 drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
 before update on public.profiles
@@ -196,11 +187,9 @@ using (auth.uid() = user_id);
 
 -- ============================================================
 -- admin_users  (Phase 2)
--- Canonical source of admin membership. Replaces the is_admin flag
--- on profiles. The server checks this table via the service role;
--- regular clients only see their own row via RLS.
--- Management: INSERT/DELETE rows here manually (or via a future
--- admin API) — never flip profiles.is_admin directly.
+-- Canonical source of admin membership. The server checks this table
+-- via the service role; regular clients only see their own row via RLS.
+-- Management: INSERT/DELETE rows here manually (or via a future admin API).
 -- ============================================================
 create table if not exists public.admin_users (
   user_id   uuid primary key references auth.users(id) on delete cascade,
@@ -219,11 +208,6 @@ using (auth.uid() = user_id);
 
 -- Only the service role (server) may insert/update/delete.
 -- No INSERT/UPDATE/DELETE policies = blocked for all authenticated roles.
-
--- Backfill: copy existing is_admin = true rows from profiles into admin_users.
-insert into public.admin_users (user_id)
-select id from public.profiles where is_admin = true
-on conflict (user_id) do nothing;
 
 -- ============================================================
 -- vendor_categories  (Phase 2)

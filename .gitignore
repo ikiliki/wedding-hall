@@ -52,3 +52,12 @@ client/storybook-static
 # IDE
 .idea
 .vscode
+
+# Claude / Cursor local (not shared)
+.claude/settings.local.json
+
+# Local LLM model defs (Ollama etc.)
+Modelfile
+
+# dotenvx / secrets
+.env.keys

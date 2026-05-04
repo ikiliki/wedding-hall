@@ -14,9 +14,13 @@
     "storybook": "npm run storybook -w wedding-hall-client",
     "build-storybook": "npm run build-storybook -w wedding-hall-client",
     "test:storybook": "playwright test",
+    "test:e2e:prod": "playwright test --config=playwright.prod.config.ts",
+    "test:e2e:prod:headed": "playwright test --config=playwright.prod.config.ts --headed",
+    "test:e2e:prod:debug": "playwright test --config=playwright.prod.config.ts --debug",
     "env:local": "node scripts/setup-env.mjs --local",
     "env:cloud": "node scripts/setup-env.mjs --from-supabase",
-    "env:push-vercel": "node scripts/setup-env.mjs --push-vercel"
+    "env:push-vercel": "node scripts/setup-env.mjs --push-vercel",
+    "supabase:cleanup-e2e-users": "npx supabase db query --linked --agent=no -f supabase/delete-e2e-test-users.sql"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

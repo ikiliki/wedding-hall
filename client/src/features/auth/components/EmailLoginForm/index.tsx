@@ -17,7 +17,7 @@ import * as styles from "./EmailLoginForm.styles";
 const DEFAULT_EMAIL = import.meta.env.DEV ? "test@gmail.com" : "";
 const DEFAULT_PASSWORD = import.meta.env.DEV ? "test1234" : "";
 
-type Mode = "signin" | "signup" | "forgot";
+type Mode = "signin" | "signup";
 
 export type EmailLoginFormProps = {
   /** Staff gate at `/admin`: sign-in only; after auth always returns to `/admin`. */
@@ -63,13 +63,9 @@ export function EmailLoginForm({
     if (next === "signup") {
       setEmail("");
       setPassword("");
-    } else if (next === "signin") {
+    } else {
       setEmail(devPrefillEmail);
       setPassword(devPrefillPassword);
-    } else {
-      /* forgot */
-      setPassword("");
-      if (!email.trim()) setEmail(devPrefillEmail);
     }
   }
 
@@ -79,45 +75,6 @@ export function EmailLoginForm({
       : (wizardResumePath ?? (await getPostAuthPath(supabase)));
     const rs = isAdminGate ? undefined : wizardPostLoginNavState(wizardResumePath);
     navigate(next, { replace: true, state: rs });
-  }
-
-  async function handlePasswordReset() {
-    await sendRecoveryEmail(email.trim(), { suppressEmptyEmailError: false });
-  }
-
-  /** Shared by duplicate-email UX and forgot-password tab. */
-  async function sendRecoveryEmail(
-    trimmedEmail: string,
-    opts: { suppressEmptyEmailError: boolean },
-  ) {
-    setErrorMsg(null);
-    setInfo(null);
-    if (!trimmedEmail || !/.+@.+\..+/.test(trimmedEmail)) {
-      if (!opts.suppressEmptyEmailError) {
-        setErrorMsg("נא למלא כתובת אימייל תקינה.");
-      }
-      return;
-    }
-    setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    });
-    setLoading(false);
-    if (error) {
-      setErrorMsg(error.message);
-      return;
-    }
-    setInfo(
-      `שלחנו קישור לאיפוס סיסמה ל-${trimmedEmail}. פתחו את המייל ובחרו סיסמה חדשה.`,
-    );
-  }
-
-  async function submitForgot(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setErrorMsg(null);
-    setInfo(null);
-    await sendRecoveryEmail(email.trim(), { suppressEmptyEmailError: false });
   }
 
   // Result of the post-auth `POST /api/profiles` round-trip.
@@ -197,9 +154,7 @@ export function EmailLoginForm({
       if (error) {
         setLoading(false);
         if (/email rate limit/i.test(error.message)) {
-          setErrorMsg(
-            'הגעתם למגבלת קצב שליחת מיילים. כבו את "אימות אימייל" ב-Supabase ← Authentication ← Providers ← Email, ונסו שוב.',
-          );
+          setErrorMsg("יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.");
           return;
         }
         if (/already registered|user already exists|already.+exists/i.test(error.message)) {
@@ -227,9 +182,7 @@ export function EmailLoginForm({
 
       if (!data.session) {
         setLoading(false);
-        setInfo(
-          `החשבון נוצר. בדקו את ${trimmedEmail} לקבלת קישור אימות, ואז התחברו.`,
-        );
+        setInfo("נרשמתם. התחברו עם האימייל והסיסמה אחרי שקיבלתם גישה לחשבון.");
         return;
       }
 
@@ -259,9 +212,7 @@ export function EmailLoginForm({
     if (error) {
       setLoading(false);
       if (/email not confirmed/i.test(error.message)) {
-        setErrorMsg(
-          "לחשבון זה קיים אימייל שלא אומת. פתחו את מייל האימות, או הריצו supabase/seed.sql ליצירת משתמש דמו מאומת מראש.",
-        );
+        setErrorMsg("יש להשלים את הכניסה לאימייל לפני ההתחברות.");
         return;
       }
       if (/invalid login credentials/i.test(error.message)) {
@@ -291,90 +242,6 @@ export function EmailLoginForm({
     }
     await postAuthNavigate(supabase);
     setLoading(false);
-  }
-
-  const wizardRouteState =
-    isAdminGate ? undefined : wizardPostLoginNavState(wizardResumePath);
-
-  if (!isAdminGate && mode === "forgot") {
-    return (
-      <form className={styles.form} onSubmit={submitForgot} noValidate>
-        {SERVER_URL_MISCONFIGURED && (
-          <div className={styles.configBanner} role="alert">
-            <strong>נדרשת הגדרה:</strong> לבנייה זו חסר{" "}
-            <code>VITE_SERVER_URL</code>. הגדירו אותו בפרויקט הלקוח ב-Vercel
-            (למשל <code>https://wedding-hall-server.vercel.app</code>) ופרסמו
-            מחדש — עד אז ההתחברות לא תצליח.
-          </div>
-        )}
-        <p className={styles.helper}>
-          הזינו את כתובת האימייל של החשבון — נשלח קישור לאיפוס סיסמה (בתוקף
-          למספר דקות).
-        </p>
-        <div className={styles.field}>
-          <label htmlFor="forgot-email" className={styles.label}>
-            כתובת אימייל
-          </label>
-          <input
-            id="forgot-email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            className={styles.input}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@domain.co.il"
-            required
-            disabled={loading}
-          />
-        </div>
-
-        {errorMsg && (
-          <p className={styles.error} role="alert">
-            {errorMsg}
-          </p>
-        )}
-        {info && (
-          <p className={styles.success} role="status">
-            {info}
-          </p>
-        )}
-        <Button
-          type="submit"
-          variant="primary"
-          fullWidth
-          disabled={loading || email.trim().length === 0}
-        >
-          {loading ? "שולחים…" : "שליחת קישור לאיפוס"}
-        </Button>
-        <p className={styles.helper}>
-          <button
-            type="button"
-            className={styles.linkButton}
-            onClick={() => switchMode("signin")}
-          >
-            חזרה להתחברות
-          </button>
-          {wizardResumePath ? (
-            <>
-              {" · "}
-              <button
-                type="button"
-                className={styles.linkButton}
-                onClick={() =>
-                  navigate(wizardResumePath!, {
-                    replace: true,
-                    state: wizardRouteState,
-                  })
-                }
-              >
-                חזרה לשאלון
-              </button>
-            </>
-          ) : null}
-        </p>
-      </form>
-    );
   }
 
   return (
@@ -449,17 +316,6 @@ export function EmailLoginForm({
           minLength={6}
         />
         {mode === "signup" && <p className={styles.helper}>לפחות 6 תווים.</p>}
-        {!isAdminGate && mode === "signin" && (
-          <div className={styles.toolbarRow}>
-            <button
-              type="button"
-              className={styles.linkButton}
-              onClick={() => switchMode("forgot")}
-            >
-              שכחת סיסמה?
-            </button>
-          </div>
-        )}
       </div>
 
       {errorMsg && (
@@ -475,13 +331,6 @@ export function EmailLoginForm({
                 onClick={() => switchMode("signin")}
               >
                 עברו להתחברות
-              </button>
-              <button
-                type="button"
-                className={styles.linkButton}
-                onClick={() => void handlePasswordReset()}
-              >
-                שלחו לי קישור לאיפוס
               </button>
             </div>
           )}

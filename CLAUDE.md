@@ -51,7 +51,8 @@ If a request would expand `PLAN.md` (vendors, marketplace, admin cross-user read
 All skills live under [`.claude/skills/`](./.claude/skills/) and are available as slash commands:
 
 - [`manual-vercel-supabase-runbook`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for things only the user can do (Vercel env vars, redeploys, redirect URLs, RLS sanity checks, schema migrations).
-- [`supabase-production-reset-cli`](./.claude/skills/supabase-production-reset-cli/SKILL.md) — production DB reset script via `psql` + `DATABASE_URL` (keep `vendor_categories`).
+- [`supabase-production-reset-cli`](./.claude/skills/supabase-production-reset-cli/SKILL.md) — Supabase CLI `db query` + MCP to export URL/keys; account token + DB password for `link` (not anon key).
+- [`supabase-e2e-test-data-cleanup`](./.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md) — delete Playwright prod E2E users (`wh-e2e-%`); MCP `execute_sql` or `npm run supabase:cleanup-e2e-users`.
 - [`wedding-hall-pr-workflow`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit conventions, PR body template, finishing checklist.
 - [`mobile-responsive-css`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, breakpoint set, popover/stack/long-text patterns, per-component checklist. Read before adding any new `wh-*` class or fixing a "looks weird on my phone" report.
 - [`local-docker-stack`](./.claude/skills/local-docker-stack/SKILL.md) — full app on `docker compose`.
@@ -65,4 +66,4 @@ All skills live under [`.claude/skills/`](./.claude/skills/) and are available a
 
 Push back, but document it. If a rule blocks the task, propose an explicit exception in the PR (with a `RULES.md` and `PLAN.md` update) — don't silently violate it. Examples that have come up:
 
-- Service-role-keyed admin endpoints — currently **not allowed**. The first admin feature shipped using `is_admin` on `profiles` + RLS only. Cross-user reads are deferred until we agree on the exception.
+- Service-role-keyed admin endpoints — vendor catalog admin routes use the service role after `requireAdmin()` checks `public.admin_users`. Cross-user reads beyond that are deferred until we agree on an exception.

@@ -154,16 +154,13 @@ services:
     volumes:
       - ./supabase/schema.sql:/schema.sql:ro
       - ./supabase/seed.sql:/seed.sql:ro
-      - ./supabase/fix-prod-and-seed-demo-user.sql:/demo.sql:ro
-    # Canonical DDL (vendor_categories, vendors, admin_users, …) then seed.sql
-    # (demo budget + omri repair + admin mock budget refresh), then NOTIFY
-    # its schema cache. PostgREST boots before the tables exist, so without
-    # this NOTIFY the first PUT to /api/budget returns "404 / empty body"
-    # until you manually restart the rest container.
+    # DDL (`schema.sql`: vendor_categories, vendors, admin_users, …) then
+    # `seed.sql` (demo + staff admin). `seed.sql` ends with NOTIFY so PostgREST
+    # reloads its schema cache (avoids empty 404 on first /api/budget).
     entrypoint:
       - sh
       - -c
-      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /schema.sql && psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /demo.sql && psql -h db -U postgres -d postgres -c \"NOTIFY pgrst, 'reload schema';\" && echo '✓ Wedding Hall seeded'"
+      - "psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /schema.sql && psql -h db -U postgres -d postgres -v ON_ERROR_STOP=1 -f /seed.sql && echo '✓ Wedding Hall seeded'"
     restart: "no"
 
   client:

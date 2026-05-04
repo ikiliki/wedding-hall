@@ -17,7 +17,7 @@ Binding for every change in this repository.
 
 ### Admin user management
 
-Membership lives in `public.admin_users` (not `profiles.is_admin`). Add an admin by inserting a row:
+Membership lives in `public.admin_users`. Add an admin by inserting a row:
 
 ```sql
 insert into public.admin_users (user_id) values ('<uuid>');

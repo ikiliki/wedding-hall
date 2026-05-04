@@ -13,9 +13,9 @@ type GateState = "loading" | "need_login" | "ok" | "denied";
 
 // `/admin` entry: sign-in happens on this URL. After Supabase auth succeeds,
 // we call `POST /api/profiles` (upsertProfile) and only allow the shell when
-// `profiles.is_admin` is true. Non-admins stay on the page with a clear
-// message (no Postgres reads from the browser — same server path as the rest
-// of the app).
+// the response has `is_admin: true` (derived server-side from `admin_users`).
+// Non-admins stay on the page with a clear message (no Postgres reads from the
+// browser — same server path as the rest of the app).
 export function AdminGate({ children }: Props) {
   const [state, setState] = useState<GateState>("loading");
 

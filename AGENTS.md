@@ -9,7 +9,8 @@ Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor
 - **`client/`** — Vite + React + TypeScript + global CSS (`client/src/styles/style.css`, `wh-*` classes). Auth (`supabase.auth.*`) runs in the browser with the Supabase anon key. **All data calls go through the server** via `client/src/shared/lib/api.ts`.
 - **`server/`** — **Next.js 15** data gateway: `/api/health`, `/api/openapi.json`, `/docs`, `/api/profiles`, `/api/budget`. Uses the Supabase **anon** key + the calling user's forwarded JWT — RLS still enforces ownership. Do not add the service role key here.
 - **`packages/shared/`** — `@wedding-hall/shared`. Cross-package types, venue tier prices, **the budget catalog (every wizard category + tier)**, and the pricing function used by both client (preview) and server (recompute). Single source.
-- **`supabase/`** — SQL: `schema.sql`, `seed.sql` (idempotent). Includes the `handle_new_auth_user` trigger that auto-provisions a `public.profiles` row on every signup.
+- **`supabase/`** — **`schema.sql`** (DDL, RLS, `vendor_categories`) + **`seed.sql`** (demo user + staff admin only). Includes the `handle_new_auth_user` trigger that auto-provisions a `public.profiles` row on every signup.
+- **Cloud project (prod)** — ref `siutibzdbnngrvwlnfok` · `https://siutibzdbnngrvwlnfok.supabase.co` (see [`.env.example`](./.env.example) as `SUPABASE_PROJECT_REF` / `SUPABASE_URL`).
 
 ## User-facing flow
 
@@ -56,6 +57,7 @@ All skills live under [`.claude/skills/`](./.claude/skills/):
 - [`.claude/skills/wedding-hall-signup-debug/SKILL.md`](./.claude/skills/wedding-hall-signup-debug/SKILL.md) — runbook for "email already registered" / orphaned `auth.users` rows / signup-flow bugs.
 - [`.claude/skills/mobile-responsive-css/SKILL.md`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, per-component checklist.
 - [`.claude/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for Vercel/Supabase dashboard actions.
-- [`.claude/skills/supabase-production-reset-cli/SKILL.md`](./.claude/skills/supabase-production-reset-cli/SKILL.md) — run `production-reset-keep-categories.sql` with `psql` from the CLI.
+- [`.claude/skills/supabase-production-reset-cli/SKILL.md`](./.claude/skills/supabase-production-reset-cli/SKILL.md) — run SQL with **`npx supabase db query` only**; use MCP to read **project ref**, **API URL**, and **publishable keys** into env, then **account** `SUPABASE_ACCESS_TOKEN` + **`supabase link`** (database password). Anon key from MCP does not replace CLI auth.
+- [`.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md`](./.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md) — delete Playwright prod E2E users (`wh-e2e-%`) via MCP **`execute_sql`** or **`npm run supabase:cleanup-e2e-users`**; not a full DB reset.
 - [`.claude/skills/wedding-hall-pr-workflow/SKILL.md`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit format, PR template.
 - [`.claude/skills/admin-vendor-management/SKILL.md`](./.claude/skills/admin-vendor-management/SKILL.md) — admin_users table, vendor catalog, service-role setup, photo upload, category-wizard linking.

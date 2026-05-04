@@ -25,7 +25,7 @@ Monorepo for a minimal black-and-white wedding-budget **MVP**: a **React (Vite)*
 | [`client/`](./client/) | Vite + React + TypeScript + global CSS (`wh-*` in `src/styles/style.css`). Feature folders under `client/src/features/`. Auth in the browser; data through `client/src/shared/lib/api.ts`. |
 | [`server/`](./server/) | Next.js 15 data gateway. `/api/health`, `/api/openapi.json`, `/docs`, `/api/profiles`, `/api/budget`. |
 | [`packages/shared/`](./packages/shared/) | `@wedding-hall/shared` — cross-package types and venue tier prices. |
-| [`supabase/`](./supabase/) | `schema.sql`, `seed.sql` — single Supabase project for DB + Auth. |
+| [`supabase/`](./supabase/) | **`schema.sql`** (DDL + `vendor_categories`) and **`seed.sql`** (demo user + staff admin). See **Which SQL scripts to run** below. |
 | [`scripts/setup-env.mjs`](./scripts/setup-env.mjs) | Env bootstrapper (`npm run env:local | env:cloud | env:push-vercel`). |
 
 ## Local development
@@ -117,7 +117,7 @@ Full guide: [`.claude/skills/wedding-hall-env-bootstrap/SKILL.md`](./.claude/ski
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
-- `CLIENT_ORIGIN` — comma-separated list of allowed browser origins (e.g. `https://wedding-hall-client.vercel.app`). Local Vite (`http://localhost:5173`) is always allowed.
+- `CLIENT_ORIGIN` — comma-separated list of allowed browser origins (e.g. `https://wedding-hall-gamma.vercel.app`). Local Vite (`http://localhost:5173`) is always allowed.
 
 ---
 
@@ -135,9 +135,25 @@ Full guide: [`.claude/skills/wedding-hall-env-bootstrap/SKILL.md`](./.claude/ski
      https://<your-client-prod-domain>/auth/callback
      ```
 
-5. **SQL Editor**: run [`supabase/seed.sql`](./supabase/seed.sql) once (idempotent). It creates tables, RLS, and the pre-confirmed demo user.
+5. **SQL Editor**: for **initial Supabase Cloud bootstrap**, run [`supabase/seed.sql`](./supabase/seed.sql) once (idempotent) if you want the same tables + demo user as local docker — or prefer [`supabase/schema.sql`](./supabase/schema.sql) for **structure + `vendor_categories` only** without demo users (see the table below).
 
 The **server** does NOT need `SUPABASE_SERVICE_ROLE_KEY` — it uses the anon key + the user's forwarded JWT so RLS stays in charge. Don't add the service-role key unless a future endpoint genuinely needs to bypass RLS.
+
+### Which SQL scripts to run where
+
+| Script | Use on production | Notes |
+|--------|-------------------|--------|
+| [`supabase/schema.sql`](./supabase/schema.sql) | Yes, when you intentionally sync **schema + RLS + triggers** and idempotent reference rows (`vendor_categories`). | Safe to re-run; does not delete user data. Never replaces existing category rows with new copy — inserts use `on conflict … do nothing`. |
+| [`supabase/seed.sql`](./supabase/seed.sql) | **No** for routine releases — **local/docker only** (also used by `docker compose` seed container). | Demo user (`test@gmail.com`) + staff admin (`admin@weddinghall.app`); not for every deploy. |
+
+**Destructive production wipes** (truncate budgets, delete vendors/Auth, etc.) are **not** stored as `.sql` files in this repo — use the Supabase SQL Editor, **`npx supabase db query`** per [`.claude/skills/supabase-production-reset-cli/SKILL.md`](./.claude/skills/supabase-production-reset-cli/SKILL.md), or paste the snippets from [`.claude/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) § **S7**.
+
+**Reference data that does not live in Postgres:** the budget wizard questionnaire (steps, options, copy, tier prices) is defined in [`packages/shared/src/budget-catalog.ts`](./packages/shared/src/budget-catalog.ts) and ships with the client — Vercel deploys do not overwrite the database for that.
+
+### Database migrations and automation
+
+- **Today:** schema changes are **manual** — Supabase Dashboard → SQL Editor (see [`.claude/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) § S1). Vercel CI **does not** apply migrations to Postgres.
+- **Recommendation:** keep migrations manual until you add a controlled runner; then prefer **versioned SQL** under `supabase/migrations/` (Supabase CLI) or a single GitHub Action with the DB connection string in **repository secrets** — not in the repo. Alternative: Supabase’s own **linked Git / migration** workflow if your project uses it.
 
 ---
 

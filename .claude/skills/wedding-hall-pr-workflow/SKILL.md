@@ -18,7 +18,7 @@ Conventional Commits with package scope:
 ```
 feat(client): debounce /budget autosave
 fix(server): allow Hebrew characters in profile names
-chore(supabase): add is_admin column + RLS
+chore(supabase): sync schema.sql with prod migration
 ```
 
 Subject under ~72 chars. Body optional but useful for non-obvious changes — explain *why*, not *what*.
@@ -63,7 +63,7 @@ One paragraph. Why this PR exists, what it does at a product level.
 
 (If any. List by id from `manual-vercel-supabase-runbook` and inline the steps.)
 
-1. **S1 — run migration**: paste `supabase/2026-05-03-is-admin.sql` into Supabase SQL Editor → Run.
+1. **S1 — run migration**: paste the idempotent SQL from `supabase/schema.sql` (or the PR snippet) into Supabase SQL Editor → Run.
 2. **V1 — Vercel env**: add `ADMIN_EMAILS` on `wedding-hall-server` project → redeploy.
 
 ## Risk / rollback

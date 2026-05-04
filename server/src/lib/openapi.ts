@@ -218,7 +218,7 @@ export function buildOpenApi(origin: string): OpenApiDocument {
             is_admin: {
               type: "boolean",
               description:
-                "Wedding Hall admin flag. Defaults to false; flipped manually via SQL.",
+                "True when the user has a row in public.admin_users (checked server-side via service role).",
             },
             created_at: { type: "string", format: "date-time" },
             updated_at: { type: "string", format: "date-time" },

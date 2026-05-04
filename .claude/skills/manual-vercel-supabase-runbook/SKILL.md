@@ -43,6 +43,17 @@ After running SQL or rotating a Supabase key, env vars on Vercel may now be wron
 
 ## Supabase — common manual steps
 
+### S0. Which SQL files are safe for production (and which are not)
+
+| File | Production |
+|------|------------|
+| `supabase/schema.sql` | **Yes** — idempotent structure, RLS, triggers, and reference inserts for `vendor_categories` (`on conflict … do nothing`). Does **not** wipe user tables. |
+| `supabase/seed.sql` | **Local/docker only** — demo user (`test@gmail.com`) + staff admin (`admin@weddinghall.app`); **do not** run on production as part of every deploy. |
+
+Schema changes belong in **`schema.sql`** (and matching TS/OpenAPI). Ad-hoc destructive wipes are **not** checked in — see **S7**.
+
+The wizard questionnaire (hall steps, prices, copy) lives in `packages/shared/src/budget-catalog.ts`, not in Postgres — resetting the DB does not remove it.
+
 ### S1. Run a SQL migration
 
 1. <https://supabase.com/dashboard> → project → **SQL Editor → New query**.
@@ -50,10 +61,12 @@ After running SQL or rotating a Supabase key, env vars on Vercel may now be wron
 3. **Run**.
 4. Verify the change in **Table Editor** or by re-running the query.
 
+**Automation (optional, not configured in this repo today):** CI does **not** push migrations. Options when you outgrow manual paste: (1) GitHub Action on `main` with `supabase db push` or `psql` and the DB URL in **repository secrets**; (2) Supabase Dashboard linked migrations / branching if your org uses that workflow; (3) keep manual **S1** until you need automation. Prefer versioned files under `supabase/migrations/` once you adopt the Supabase CLI.
+
 When SQL changes, all of these stay in sync (per `.cursor/rules/finishing-checklist.mdc`):
 
 - `supabase/schema.sql`
-- `supabase/seed.sql`
+- `supabase/seed.sql` (for **local/docker parity** — not something you re-run on production every time; see **S0**)
 - `packages/shared/src/types.ts`
 - `server/src/lib/openapi.ts` (if a route field changed)
 - `server/src/lib/budget.ts` validators (if a budget field changed)
@@ -68,7 +81,7 @@ Whenever a new client origin appears (new Vercel domain, custom domain, new env)
 
    ```
    http://localhost:5173/auth/callback
-   https://wedding-hall-client.vercel.app/auth/callback
+   https://wedding-hall-gamma.vercel.app/auth/callback
    https://<custom-domain>/auth/callback
    ```
 
@@ -106,21 +119,57 @@ docker compose logs -f seed   # wait for "Seed complete"
 
 That re-runs `supabase/seed.sql` from scratch.
 
-### S6. Mark a user as admin (Phase 1+)
+### S7. Production full reset (keep `vendor_categories` only)
 
-Once `profiles.is_admin` exists:
+Use when you need a **clean slate** in production: remove **all** vendors, budgets, profiles, admin rows, and **all** Auth users, while **preserving** `public.vendor_categories` (and the questionnaire in `budget-catalog.ts`, which is not stored in the DB).
 
-1. **SQL Editor → New query**:
+In Cursor, use **Supabase CLI** per [`.claude/skills/supabase-production-reset-cli/SKILL.md`](../supabase-production-reset-cli/SKILL.md) (MCP fetches ref/URL/keys; `supabase db query --linked` runs the SQL), or paste into **SQL Editor** below.
+
+1. **Back up** anything you might need (exports, screenshots). This is irreversible.
+
+2. **SQL Editor** (or MCP) → **Part 1** — application data only (does **not** delete Auth yet):
 
    ```sql
-   update public.profiles
-   set is_admin = true
-   where id = (select id from auth.users where email = 'friend@example.com');
+   begin;
+
+   delete from public.vendors;
+
+   delete from public.admin_users;
+
+   truncate table public.wedding_budgets;
+
+   commit;
    ```
 
-2. **Run**. Verify in **Table Editor → profiles**.
+3. **Part 2** — remove Auth users only when ready (cascades profiles, sessions, etc.). Either **Authentication → Users** bulk delete, or:
 
-The user must sign out and back in if their JWT was issued before the flip and the app caches the profile (Phase 1 reads it on each `/admin` enter).
+   ```sql
+   begin;
+   delete from auth.users;
+   commit;
+   ```
+
+   If `delete from auth.users` fails (permissions / pooler), use the dashboard.
+
+4. **Storage** → bucket `vendor-photos`: delete leftover objects (optional cleanup after vendors are gone).
+
+5. Recreate admin access per **Phase 2** in `PLAN.md` (`admin_users` / signup), not by re-running `seed.sql` on production unless you explicitly want demo accounts again.
+
+6. **V3** — redeploy client/server if needed so env and builds match expectations.
+
+### S6. Mark a user as admin
+
+1. **Authentication → Users**: copy the user’s UUID, or resolve by email in SQL:
+
+   ```sql
+   insert into public.admin_users (user_id)
+   values ((select id from auth.users where email = 'friend@example.com'))
+   on conflict (user_id) do nothing;
+   ```
+
+2. **Run**. Verify in **Table Editor → admin_users** (or query `select * from public.admin_users`).
+
+The user may need to trigger `POST /api/profiles` again (e.g. revisit `/admin`) so the client picks up `is_admin: true`.
 
 ---
 
@@ -130,7 +179,7 @@ When Claude opens a PR or proposes a change that requires manual work, Claude in
 
 > ## Manual steps
 >
-> 1. **S1 — run migration**: paste `supabase/2026-05-03_is_admin.sql` into the Supabase SQL Editor and Run.
+> 1. **S1 — run migration**: paste the **idempotent** update from `supabase/schema.sql` (or the PR’s migration snippet) into the Supabase SQL Editor and Run.
 > 2. **S6 — mark admin**: replace `friend@example.com` with the actual email and run.
 > 3. **V3 — redeploy** the client project after the schema change so the cached build is refreshed.
 

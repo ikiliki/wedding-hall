@@ -1,10 +1,12 @@
 -- =================================================================
---  Wedding Hall - one-shot Supabase setup
---  Paste this entire file into the Supabase SQL Editor and click Run.
---  Idempotent: safe to run multiple times.
---  Creates: profiles + wedding_budgets tables, RLS policies, a
---  pre-confirmed demo user (test@gmail.com / test1234), and a staff admin
---  account (admin@weddinghall.app / Admin!2026, profiles.is_admin = true).
+--  Wedding Hall — data seed (demo user + staff admin)
+--  Idempotent. For docker compose: `schema.sql` runs first, then this file.
+--  For Supabase Cloud: you may run this after `schema.sql` or use this file
+--  standalone (it still includes full DDL for one-shot paste).
+--
+--  Seeds: pre-confirmed demo user (test@gmail.com / test1234) and staff admin
+--  (admin@weddinghall.app / Admin!2026, row in public.admin_users).
+--  Reference categories (`vendor_categories`) live in `schema.sql`.
 -- =================================================================
 
 -- ----------------------------------------------------------------
@@ -35,9 +37,6 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
-alter table public.profiles
-  add column if not exists is_admin boolean not null default false;
 
 drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
@@ -171,6 +170,23 @@ to authenticated
 using (auth.uid() = user_id);
 
 -- ----------------------------------------------------------------
+-- admin_users (staff gate; full DDL also in schema.sql)
+-- ----------------------------------------------------------------
+create table if not exists public.admin_users (
+  user_id   uuid primary key references auth.users(id) on delete cascade,
+  granted_by uuid references auth.users(id),
+  granted_at timestamptz not null default now()
+);
+
+alter table public.admin_users enable row level security;
+
+drop policy if exists "admin_users_select_own" on public.admin_users;
+create policy "admin_users_select_own"
+on public.admin_users for select
+to authenticated
+using (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------
 -- Demo test user (pre-confirmed). Idempotent.
 -- ----------------------------------------------------------------
 do $$
@@ -243,8 +259,8 @@ begin
     now()
   );
 
-  insert into public.profiles (id, email, full_name, is_admin)
-  values (v_user_id, 'test@gmail.com', 'Test User', false)
+  insert into public.profiles (id, email, full_name)
+  values (v_user_id, 'test@gmail.com', 'Test User')
   on conflict (id) do nothing;
 
   raise notice '--- Wedding Hall setup complete ---';
@@ -253,7 +269,7 @@ begin
 end $$;
 
 -- ----------------------------------------------------------------
--- Staff admin (`profiles.is_admin`). Idempotent.
+-- Staff admin (public.admin_users). Idempotent.
 --   admin@weddinghall.app / Admin!2026
 -- ----------------------------------------------------------------
 do $$
@@ -364,109 +380,15 @@ begin
     raise notice 'Refreshed staff admin admin@weddinghall.app';
   end if;
 
-  insert into public.profiles (id, email, full_name, is_admin)
-  values (v_user_id, 'admin@weddinghall.app', 'Staff Admin', true)
+  insert into public.profiles (id, email, full_name)
+  values (v_user_id, 'admin@weddinghall.app', 'Staff Admin')
   on conflict (id) do update set
     email     = excluded.email,
-    full_name = excluded.full_name,
-    is_admin  = true;
-end $$;
+    full_name = excluded.full_name;
 
--- ----------------------------------------------------------------
--- Local dev test users (all password: 123123). Idempotent.
---   admin@test.com   / 123123  →  is_admin = true
---   test1@test.com   / 123123
---   test2@test.com   / 123123
---   test3@test.com   / 123123
--- ----------------------------------------------------------------
-do $$
-declare
-  v_user_id  uuid;
-  v_email    text;
-  v_name     text;
-  v_is_admin boolean;
-begin
-  for v_email, v_name, v_is_admin in
-    values
-      ('admin@test.com', 'Local Admin',  true),
-      ('test1@test.com', 'Test User 1',  false),
-      ('test2@test.com', 'Test User 2',  false),
-      ('test3@test.com', 'Test User 3',  false)
-  loop
-    select id into v_user_id from auth.users where email = v_email;
-
-    if v_user_id is null then
-      v_user_id := gen_random_uuid();
-
-      insert into auth.users (
-        instance_id, id, aud, role, email, encrypted_password,
-        email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
-        created_at, updated_at,
-        confirmation_token, email_change, email_change_token_new, recovery_token
-      ) values (
-        '00000000-0000-0000-0000-000000000000',
-        v_user_id, 'authenticated', 'authenticated',
-        v_email,
-        crypt('123123', gen_salt('bf')),
-        now(),
-        '{"provider":"email","providers":["email"]}'::jsonb,
-        jsonb_build_object('full_name', v_name),
-        now(), now(), '', '', '', ''
-      );
-
-      insert into auth.identities (
-        id, user_id, identity_data, provider, provider_id,
-        last_sign_in_at, created_at, updated_at
-      ) values (
-        gen_random_uuid(), v_user_id,
-        jsonb_build_object(
-          'sub', v_user_id::text,
-          'email', v_email,
-          'email_verified', true,
-          'phone_verified', false
-        ),
-        'email', v_user_id::text,
-        now(), now(), now()
-      );
-
-      raise notice 'Created % (id %)', v_email, v_user_id;
-    else
-      update auth.users
-         set email_confirmed_at  = coalesce(email_confirmed_at, now()),
-             encrypted_password  = crypt('123123', gen_salt('bf')),
-             confirmation_token  = '',
-             recovery_token      = '',
-             updated_at          = now()
-       where id = v_user_id;
-
-      insert into auth.identities (
-        id, user_id, identity_data, provider, provider_id,
-        last_sign_in_at, created_at, updated_at
-      )
-      select gen_random_uuid(), v_user_id,
-             jsonb_build_object(
-               'sub', v_user_id::text,
-               'email', v_email,
-               'email_verified', true,
-               'phone_verified', false
-             ),
-             'email', v_user_id::text,
-             now(), now(), now()
-      where not exists (
-        select 1 from auth.identities
-        where user_id = v_user_id and provider = 'email'
-      );
-
-      raise notice 'Refreshed %', v_email;
-    end if;
-
-    insert into public.profiles (id, email, full_name, is_admin)
-    values (v_user_id, v_email, v_name, v_is_admin)
-    on conflict (id) do update set
-      email      = excluded.email,
-      full_name  = excluded.full_name,
-      is_admin   = excluded.is_admin;
-  end loop;
+  insert into public.admin_users (user_id)
+  values (v_user_id)
+  on conflict (user_id) do nothing;
 end $$;
 
 -- ----------------------------------------------------------------
@@ -476,15 +398,17 @@ select
   (select count(*) from public.profiles)         as profiles_rows,
   (select count(*) from public.wedding_budgets)  as wedding_budgets_rows;
 
-select u.email, p.is_admin, p.full_name
+select
+  u.email,
+  p.full_name,
+  exists (select 1 from public.admin_users a where a.user_id = u.id) as is_staff_admin
   from auth.users u
   join public.profiles p on p.id = u.id
  where u.email in (
    'test@gmail.com',
-   'admin@weddinghall.app',
-   'admin@test.com',
-   'test1@test.com',
-   'test2@test.com',
-   'test3@test.com'
+   'admin@weddinghall.app'
  )
  order by u.email;
+
+-- Reload PostgREST schema cache (docker compose seed runs this after seed.sql).
+notify pgrst, 'reload schema';

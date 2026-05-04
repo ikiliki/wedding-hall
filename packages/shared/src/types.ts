@@ -1,6 +1,6 @@
 // Shared DTO types for Wedding Hall.
 // Source of truth — both `client/` and `server/` import from here so the
-// HTTP boundary between them stays in lock-step with the database schema
+// HTTP boundary between them stays in lock-step with stored rows and API shape
 // (see `supabase/schema.sql`).
 
 import type { BudgetSelections } from "./budget-selections";
@@ -9,8 +9,8 @@ export type Profile = {
   id: string;
   email: string | null;
   full_name: string | null;
-  // Phase 1+: marks the row's owner as a Wedding Hall admin (manually
-  // flipped via SQL). Used by the client to gate the `/admin` route.
+  // Computed by `POST /api/profiles` from `public.admin_users` (not a profiles column).
+  // Used by the client to gate the `/admin` route.
   is_admin: boolean;
   created_at: string;
   updated_at: string;

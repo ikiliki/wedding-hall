@@ -103,7 +103,7 @@ are worth checking, in order:
    no trailing slash. Vercel does not auto-rebuild on env changes; trigger
    a redeploy after editing.
 2. **`CLIENT_ORIGIN` on the Vercel server project** — must include the
-   production client origin (e.g. `https://wedding-hall-client.vercel.app`),
+   production client origin (e.g. `https://wedding-hall-gamma.vercel.app`),
    comma-separated if you have preview domains too. If this is missing
    or misspelled the browser blocks the call as a CORS error and the
    client sees it as a network failure.
