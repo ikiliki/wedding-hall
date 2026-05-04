@@ -1,0 +1,54 @@
+# Rules maintenance
+
+Rules are living documents. When you observe a pattern—a repeated mistake, an architectural decision made in conversation, or a missing guardrail—update the rule files rather than only fixing the immediate code.
+
+## When to create a new rule
+
+Create a new `.cursor/rules/<slug>.mdc` (or extend an existing one) when:
+- The same mistake is corrected twice and no rule covers it.
+- An architecture decision is made in conversation that has no written constraint (e.g. "always compute X on the server, not the client").
+- A best practice is applied that a future contributor would have to rediscover from scratch.
+- A new package, pattern, or integration is added that has its own invariants.
+
+Add the new file path to the index table below and update `AGENTS.md` if needed.
+
+## When to update an existing rule
+
+Update the relevant rule file when:
+- A rule is violated because the wording was unclear—tighten it.
+- A path, package name, or export changes—correct the reference.
+- New constraints join an existing area (new env var, new API pattern, new wizard step)—extend the file.
+- `PLAN.md` scope expands—update the boundary rule in `scope-and-phases.mdc` and `RULES.md`.
+
+## When to delete a rule
+
+Remove a rule (or a section) when:
+- The thing it guards no longer exists in the codebase.
+- It duplicates another rule exactly—keep the canonical copy, delete the duplicate.
+- It was written for a temporary workaround that has since been resolved properly.
+
+## Rule file index
+
+| Concern | File |
+|---|---|
+| High-level scope, architecture constraints (binding) | `RULES.md` |
+| TypeScript, imports, money formatting | `code-style.mdc` |
+| Feature folder structure, `.styles.ts`, Storybook | `component-structure.mdc` |
+| Global `wh-*` CSS, tokens, mobile-first invariants | `styling.mdc` |
+| Auth session, RLS, JWT forwarding | `auth-and-rls.mdc` |
+| Server routes, CORS, `withCors`, input validation | `server-data-gateway.mdc` |
+| Supabase schema, migrations, RLS policies | `supabase.mdc` |
+| Next.js App Router config | `next-server.mdc` |
+| Deploy branches, Vercel, Supabase redirect URLs | `devops.mdc` |
+| Phase 1 scope boundary, out-of-scope items | `scope-and-phases.mdc` |
+| Pre-merge checklist | `finishing-checklist.mdc` |
+| This file — when/how to update rules | `rules-maintenance.mdc` |
+| New topic with no existing home | New `.cursor/rules/<slug>.mdc` |
+
+## Format guidance
+
+- Rules are constraints, not explanations. One sentence beats one paragraph.
+- Use imperative mood: "Do X", "Never Y", "Prefer Z over W".
+- Reference concrete file paths and function names where possible.
+- If a rule has an important WHY (non-obvious risk, past incident), add one short line explaining it.
+- Keep each file focused on one concern — add to the right file rather than creating a new one unless the topic clearly has no home.

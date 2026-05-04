@@ -24,6 +24,7 @@ Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor
 1. [`PLAN.md`](./PLAN.md) — scope.
 2. [`RULES.md`](./RULES.md) — binding rules.
 3. [`README.md`](./README.md) — setup, env, Supabase URLs, deploy.
+4. [`.cursor/rules/rules-maintenance.mdc`](./.cursor/rules/rules-maintenance.mdc) — when and how to update, create, or delete rules.
 
 ## Conventions
 
