@@ -42,6 +42,20 @@ docker exec wh-storybook sh -c "test -f /repo/node_modules/msw-storybook-addon/p
 
 5. Open **http://127.0.0.1:6006** and hard-refresh.
 
+## Still broken in the browser (but `npm run test:storybook` passes)
+
+1. **Confirm the stack**: This repo uses **Storybook 8.6** (`@storybook/react-vite` in `client/package.json`). If the UI shows a different major version badge (e.g. from an extension), ignore it or disable extensions — extensions can inject scripts into Storybook and break the iframe.
+
+2. **Pick one server on port 6006**: Either Docker **`storybook`** *or* host **`npm run storybook`** — not both. If two processes fight for the port, behavior is flaky (`docker compose ps`, Task Manager / `Get-NetTCPConnection -LocalPort 6006`).
+
+3. **Hard refresh / cache**: Ctrl+Shift+R, or try an **InPrivate/Incognito** window for **http://127.0.0.1:6006**.
+
+4. **Same-origin bookmark**: Stick to **either** `http://localhost:6006` **or** `http://127.0.0.1:6006` per session (different origins; avoids weird module/HMR edge cases).
+
+5. **Prove the server**: From repo root after `npm ci`, run **`npm run test:storybook`** — if this passes, Storybook is serving stories correctly; focus on browser/extensions/cache next.
+
+6. **Latest repo**: Ensure `main.ts`, `client/Dockerfile`, and root `package.json` match **main** (pull/rebase); partial upgrades leave broken Docker volumes.
+
 ## Local smoke tests (no Docker required)
 
 From repo root, after `npm ci`:
@@ -56,7 +70,7 @@ CI runs the same after `build-storybook` (installs Chromium via Playwright).
 
 ## Code locations
 
-- **Vite / aliases**: `client/.storybook/main.ts` — `@wedding-hall/shared` paths, `msw-storybook-addon`, `msw`, `server.fs.allow`.
+- **Vite / aliases**: `client/.storybook/main.ts` — `@wedding-hall/shared` paths, `msw-storybook-addon`, `msw`, `server.fs.allow`, `server.fs.strict: false`, `resolve.dedupe` for React.
 - **Image install**: `client/Dockerfile` — second `npm install` at `/repo` after full `client/` copy.
 - **Root devDeps**: `package.json` — `msw`, `msw-storybook-addon` (hoisted for Docker/CI).
 - **Tests**: `tests/storybook.spec.ts`, `playwright.config.ts`.

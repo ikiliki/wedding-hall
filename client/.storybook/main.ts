@@ -105,9 +105,12 @@ const config: StorybookConfig = {
         ...userConfig.server,
         fs: {
           ...userConfig.server?.fs,
+          // Avoid Windows/Docker edge cases where strict fs + hoisted deps fail preview.tsx transforms.
+          strict: false,
           allow: [
             path.resolve(__dirname, ".."),
             path.resolve(__dirname, "../.."),
+            path.resolve(__dirname, "../../packages"),
             SHARED_SRC,
             path.resolve(__dirname, "../../node_modules"),
             path.resolve(__dirname, "../node_modules"),
@@ -117,6 +120,13 @@ const config: StorybookConfig = {
       },
       resolve: {
         ...userConfig.resolve,
+        dedupe: [
+          ...new Set([
+            ...(Array.isArray(userConfig.resolve?.dedupe) ? userConfig.resolve.dedupe : []),
+            "react",
+            "react-dom",
+          ]),
+        ],
         alias: mergeSupabaseStorybookAlias(userConfig.resolve?.alias),
       },
       optimizeDeps: {
