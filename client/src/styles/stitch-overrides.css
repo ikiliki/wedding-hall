@@ -2318,6 +2318,7 @@ body {
 .wh-auth-input {
   padding-block: 0.75rem;
   background: rgb(255 253 246);
+  color: rgb(30 27 22);
 }
 
 .wh-auth-input::placeholder {
