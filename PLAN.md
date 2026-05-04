@@ -17,7 +17,7 @@ This plan governs what is in scope. New work must reference this file.
 - Save budget to Supabase by `user_id` (via server)
 - Dashboard with saved estimate (via server)
 - `/admin` placeholder route, gated on `profiles.is_admin` (manually
-  flipped via SQL — see `.claude-rules/skills/manual-vercel-supabase-runbook` step S6)
+  flipped via SQL — see `.claude/skills/manual-vercel-supabase-runbook` step S6)
 
 ### Phase 1 routes (client — Vite dev server default port **5173**)
 

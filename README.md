@@ -62,7 +62,7 @@ docker compose logs -f seed
 
 To wipe and start fresh: `docker compose down -v && docker compose up -d --build`.
 
-See [`.cursor/skills/local-docker-stack/SKILL.md`](./.cursor/skills/local-docker-stack/SKILL.md).
+See [`.claude/skills/local-docker-stack/SKILL.md`](./.claude/skills/local-docker-stack/SKILL.md).
 
 ### Option B — Native Node (no Docker)
 
@@ -103,7 +103,7 @@ Prereqs the script needs (one-time):
 - `npm i -g supabase` + `supabase login` for `--from-supabase`.
 - `npm i -g vercel` + `vercel login` for `--push-vercel`.
 
-Full guide: [`.cursor/skills/wedding-hall-env-bootstrap/SKILL.md`](./.cursor/skills/wedding-hall-env-bootstrap/SKILL.md).
+Full guide: [`.claude/skills/wedding-hall-env-bootstrap/SKILL.md`](./.claude/skills/wedding-hall-env-bootstrap/SKILL.md).
 
 ### Required variables
 

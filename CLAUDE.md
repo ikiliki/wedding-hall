@@ -4,7 +4,7 @@ Working notes for Claude (Cowork mode / Claude Code) on this repo. **Read [`AGEN
 
 ## Source of truth
 
-The Cursor rules in [`.cursor/rules/`](./.cursor/rules/) and the skills in [`.cursor/skills/`](./.cursor/skills/) are **binding for Claude too**. No duplication. When a Cursor rule and this file disagree, the Cursor rule wins.
+The Cursor rules in [`.cursor/rules/`](./.cursor/rules/) are **binding for Claude too**. No duplication. When a Cursor rule and this file disagree, the Cursor rule wins.
 
 Read these in order at session start (or when picking up unfamiliar work):
 
@@ -34,7 +34,7 @@ These extend (not replace) the Cursor rules.
 ### Running things
 
 - I cannot run `docker compose`, `git push`, `vercel`, or `supabase` commands in a way that touches the user's machine or accounts. I run **lint + build** in the sandbox; the user runs deploy/push/dashboard work.
-- When something needs to be done **manually** in Vercel or Supabase, **always** call out the exact steps using [`.claude-rules/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude-rules/skills/manual-vercel-supabase-runbook/SKILL.md). Don't leave the user to figure it out.
+- When something needs to be done **manually** in Vercel or Supabase, **always** call out the exact steps using [`.claude/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md). Don't leave the user to figure it out.
 - After every meaningful code change, run `npm run lint && npm run build` from the **repo root** before committing (per `.cursor/rules/finishing-checklist.mdc`).
 
 ### Cross-OS gotcha (Windows host + Linux sandbox)
@@ -46,21 +46,18 @@ These extend (not replace) the Cursor rules.
 
 If a request would expand `PLAN.md` (vendors, marketplace, admin cross-user reads, service-role server endpoints, new wedding types), **stop and ask**. Don't quietly grow the scope. If the user OKs it, update `PLAN.md` and `RULES.md` in the same PR.
 
-## Skills written for Claude
+## Skills
 
-Live under [`.claude-rules/skills/`](./.claude-rules/skills/):
+All skills live under [`.claude/skills/`](./.claude/skills/) and are available as slash commands:
 
-- [`manual-vercel-supabase-runbook`](./.claude-rules/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for things only the user can do (Vercel env vars, redeploys, redirect URLs, RLS sanity checks, schema migrations).
-- [`wedding-hall-pr-workflow`](./.claude-rules/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit conventions, PR body template, finishing checklist.
-- [`mobile-responsive-css`](./.claude-rules/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, breakpoint set, popover/stack/long-text patterns, per-component checklist. Read before adding any new `wh-*` class or fixing a "looks weird on my phone" report.
-
-Cursor skills under `.cursor/skills/` are **also valid** for Claude — read them when relevant. Quick map:
-
-- Local docker stack → `.cursor/skills/local-docker-stack/SKILL.md`
-- Production deploy → `.cursor/skills/wedding-hall-deploy/SKILL.md`
-- Env bootstrap (`npm run env:*`) → `.cursor/skills/wedding-hall-env-bootstrap/SKILL.md`
-- Adding a wizard category / pricing change → `.cursor/skills/wedding-hall-budget-flow/SKILL.md`
-- Signup-flow / "email already registered" debugging → `.cursor/skills/wedding-hall-signup-debug/SKILL.md`
+- [`manual-vercel-supabase-runbook`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for things only the user can do (Vercel env vars, redeploys, redirect URLs, RLS sanity checks, schema migrations).
+- [`wedding-hall-pr-workflow`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit conventions, PR body template, finishing checklist.
+- [`mobile-responsive-css`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, breakpoint set, popover/stack/long-text patterns, per-component checklist. Read before adding any new `wh-*` class or fixing a "looks weird on my phone" report.
+- [`local-docker-stack`](./.claude/skills/local-docker-stack/SKILL.md) — full app on `docker compose`.
+- [`wedding-hall-deploy`](./.claude/skills/wedding-hall-deploy/SKILL.md) — branches, Vercel, Supabase redirect checklist.
+- [`wedding-hall-env-bootstrap`](./.claude/skills/wedding-hall-env-bootstrap/SKILL.md) — `npm run env:local|cloud|push-vercel`.
+- [`wedding-hall-budget-flow`](./.claude/skills/wedding-hall-budget-flow/SKILL.md) — adding a new wizard category, changing prices, debugging totals.
+- [`wedding-hall-signup-debug`](./.claude/skills/wedding-hall-signup-debug/SKILL.md) — runbook for "email already registered" / orphaned `auth.users` rows / signup-flow bugs.
 
 ## When the rules feel wrong
 

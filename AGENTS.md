@@ -29,7 +29,7 @@ Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor
 
 - **Client feature layout**: `client/src/features/<feature>/components/`, `.../pages/`, optional `.../lib/`. Shared: `client/src/shared/components/`, `client/src/shared/lib/`.
 - **Colocate styles**: each component folder has `index.tsx` + `<Name>.styles.ts`. The `.styles.ts` file exports `wh-*` class-name string constants only; the actual CSS lives in `client/src/styles/style.css` (base + tokens) or `client/src/styles/stitch-overrides.css` (active wizard/dashboard theme). No inline `style=` for layout, no `<style>` tags inside components, no Tailwind / no utility-class soup. **Storybook**: co-located `<Name>.stories.tsx`; run `npm run storybook -w wedding-hall-client` (or `npm run storybook` from repo root). The Storybook vite config aliases `@/shared/lib/supabase` to `src/storybook/mocks/supabase-client.ts`; MSW serves `/api/budget` and `/api/profiles` against `http://localhost:3001` — no gateway or real Supabase project required for UI work.
-- **Mobile-first invariants** (binding — see [`.claude-rules/skills/mobile-responsive-css/SKILL.md`](./.claude-rules/skills/mobile-responsive-css/SKILL.md) for the full skill):
+- **Mobile-first invariants** (binding — see [`.claude/skills/mobile-responsive-css/SKILL.md`](./.claude/skills/mobile-responsive-css/SKILL.md) for the full skill):
   - Test every wizard step at **320 × 568** (iPhone SE) and **360 × 640**. No horizontal scroll, ever.
   - Containers use `width: 100%; max-inline-size: min(<n>rem, 100%)`, never a bare `max-width: <n>rem`.
   - Flex/grid children that hold text or inputs need `min-width: 0`. Pair with `overflow-wrap: anywhere` for long unbreakable strings (Hebrew runs, URLs).
@@ -43,10 +43,15 @@ Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor
 - **Server routes**: under `server/src/app/api/<name>/route.ts`. Always wrap responses with `withCors`, validate inputs, derive `user_id` from the JWT (never the body).
 - **Git / deploy**: integrate on `main`; ship client via **`master-client`**, server via **`master-server`** (see `.github/workflows/`).
 
-## Skills (Cursor)
+## Skills
 
-- [`.cursor/skills/wedding-hall-deploy/SKILL.md`](./.cursor/skills/wedding-hall-deploy/SKILL.md) — branches, Vercel, Supabase redirect checklist.
-- [`.cursor/skills/wedding-hall-env-bootstrap/SKILL.md`](./.cursor/skills/wedding-hall-env-bootstrap/SKILL.md) — `npm run env:local|cloud|push-vercel`.
-- [`.cursor/skills/local-docker-stack/SKILL.md`](./.cursor/skills/local-docker-stack/SKILL.md) — full app on `docker compose`.
-- [`.cursor/skills/wedding-hall-budget-flow/SKILL.md`](./.cursor/skills/wedding-hall-budget-flow/SKILL.md) — adding a new wizard category, changing prices, debugging totals.
-- [`.cursor/skills/wedding-hall-signup-debug/SKILL.md`](./.cursor/skills/wedding-hall-signup-debug/SKILL.md) — runbook for "email already registered" / orphaned `auth.users` rows / signup-flow bugs.
+All skills live under [`.claude/skills/`](./.claude/skills/):
+
+- [`.claude/skills/wedding-hall-deploy/SKILL.md`](./.claude/skills/wedding-hall-deploy/SKILL.md) — branches, Vercel, Supabase redirect checklist.
+- [`.claude/skills/wedding-hall-env-bootstrap/SKILL.md`](./.claude/skills/wedding-hall-env-bootstrap/SKILL.md) — `npm run env:local|cloud|push-vercel`.
+- [`.claude/skills/local-docker-stack/SKILL.md`](./.claude/skills/local-docker-stack/SKILL.md) — full app on `docker compose`.
+- [`.claude/skills/wedding-hall-budget-flow/SKILL.md`](./.claude/skills/wedding-hall-budget-flow/SKILL.md) — adding a new wizard category, changing prices, debugging totals.
+- [`.claude/skills/wedding-hall-signup-debug/SKILL.md`](./.claude/skills/wedding-hall-signup-debug/SKILL.md) — runbook for "email already registered" / orphaned `auth.users` rows / signup-flow bugs.
+- [`.claude/skills/mobile-responsive-css/SKILL.md`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, per-component checklist.
+- [`.claude/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for Vercel/Supabase dashboard actions.
+- [`.claude/skills/wedding-hall-pr-workflow/SKILL.md`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit format, PR template.

@@ -15,7 +15,7 @@ Binding for every change in this repository.
 
 ## UX & quality
 
-- Mobile-first, black/white minimal luxury. Default rules describe the mobile layout; desktop is added with `@media (min-width: 640|768|1024|1280px)`. The wizard must work on iPhone SE (320 × 568) with no horizontal scroll. Full invariants and patterns are binding via [`.claude-rules/skills/mobile-responsive-css/SKILL.md`](./.claude-rules/skills/mobile-responsive-css/SKILL.md) — read it before touching CSS.
+- Mobile-first, black/white minimal luxury. Default rules describe the mobile layout; desktop is added with `@media (min-width: 640|768|1024|1280px)`. The wizard must work on iPhone SE (320 × 568) with no horizontal scroll. Full invariants and patterns are binding via [`.claude/skills/mobile-responsive-css/SKILL.md`](./.claude/skills/mobile-responsive-css/SKILL.md) — read it before touching CSS.
 - Client styling is **global `wh-*` classes** declared in `client/src/styles/style.css` (base + tokens) or `client/src/styles/stitch-overrides.css` (active wizard/dashboard theme). Tokens: `--wh-ink`, `--wh-bone`, `--wh-muted`, `--wh-line`.
 - **No utility-class soup.** Every component imports its class names from a co-located `<Name>.styles.ts` that exports `wh-*` strings. No inline `style=` for layout — only for genuinely dynamic values that can't be expressed in CSS (e.g. `style={{ width: \`${pct}%\` }}` for a progress fill). No `<style>` tags inside components. No third stylesheet — extend `style.css` or `stitch-overrides.css`.
 - No new dependency on a CSS framework (Tailwind, etc.). Vanilla CSS only; PostCSS is autoprefixer-only.
@@ -24,7 +24,7 @@ Binding for every change in this repository.
 
 ## Env
 
-- Bootstrap automation: `npm run env:local | env:cloud | env:push-vercel` (see `.cursor/skills/wedding-hall-env-bootstrap/SKILL.md`).
+- Bootstrap automation: `npm run env:local | env:cloud | env:push-vercel` (see `.claude/skills/wedding-hall-env-bootstrap/SKILL.md`).
 - Required env:
   - Client: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SERVER_URL`.
   - Server: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CLIENT_ORIGIN`.
