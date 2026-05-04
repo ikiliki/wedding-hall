@@ -10,7 +10,7 @@ Use when the user wants to run the app locally without touching cloud Supabase, 
 ## Prerequisites
 
 - Docker Desktop running (Compose v2 ships with it).
-- Ports free locally: **5173** (client), **6006** (Storybook), **3001** (server), **54321** (gateway), **54322** (postgres).
+- Ports free locally: **5173** (client), **6006** (Storybook), **3001** (server), **54321** (gateway), **54322** (postgres), **54323** (Supabase Studio).
 
 ## Bring it up
 
@@ -34,6 +34,7 @@ Then open:
 - Server docs → <http://localhost:3001/docs>
 - Server budget endpoint (will 401 without a JWT — expected) → <http://localhost:3001/api/budget>
 - Supabase API → <http://localhost:54321/rest/v1/wedding_budgets?select=id> (anon should get `[]`)
+- **Supabase Studio** → <http://localhost:54323> — browse tables, run SQL, inspect auth users
 
 ## How requests flow
 
@@ -41,9 +42,16 @@ Then open:
 2. Browser → `http://localhost:3001/api/profiles` and `/api/budget` with `Authorization: Bearer <jwt>`.
 3. Server → `http://gateway:8000/auth/v1/user` (verify JWT) and `/rest/v1/...` (read/write with RLS as that user).
 
-## Demo login
+## Demo logins (all seeded by `supabase/seed.sql`)
 
-Email `test@gmail.com`, password `test1234` — created by `supabase/seed.sql`.
+| Email | Password | is_admin |
+|---|---|---|
+| `test@gmail.com` | `test1234` | — |
+| `admin@weddinghall.app` | `Admin!2026` | ✓ |
+| `admin@test.com` | `123123` | ✓ |
+| `test1@test.com` | `123123` | — |
+| `test2@test.com` | `123123` | — |
+| `test3@test.com` | `123123` | — |
 
 ## Common operations
 

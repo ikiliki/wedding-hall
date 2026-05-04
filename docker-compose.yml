@@ -5,6 +5,8 @@
 #   auth     gotrue (Supabase Auth)
 #   rest     postgrest (Supabase data API)
 #   gateway  nginx routing /auth/v1 + /rest/v1 onto port 54321
+#   meta     postgres-meta (table/schema inspector used by Studio)
+#   studio   Supabase Studio UI → http://localhost:54323
 #   seed     one-shot loader for supabase/seed.sql (creates demo user)
 #   client     Vite dev server on http://localhost:5173
 #   storybook  Storybook on http://localhost:6006 (MSW mocks; no DB/server required)
@@ -102,6 +104,42 @@ services:
       - "54321:8000"
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  meta:
+    image: supabase/postgres-meta:v0.84.2
+    container_name: wh-meta
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: "8080"
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: "5432"
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: postgres
+
+  studio:
+    image: supabase/studio:20241202-71e5240
+    container_name: wh-studio
+    restart: unless-stopped
+    depends_on:
+      - meta
+      - gateway
+    ports:
+      - "54323:3000"
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      SUPABASE_URL: http://gateway:8000
+      SUPABASE_PUBLIC_URL: http://localhost:54321
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6IndlZGRpbmctaGFsbC1sb2NhbCIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxNzk5NTM1NjAwfQ.JxejbUaxXmfGDcu7-FsaoReqSHXWG1CRnKUwq06VX3o
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoid2VkZGluZy1oYWxsLWxvY2FsIiwiaWF0IjoxNjQxNzY5MjAwLCJleHAiOjE3OTk1MzU2MDB9.-XtWcvIKEMGd54AScK2_CrZ9-a3y29tummnmCYwUn7g
+      POSTGRES_PASSWORD: postgres
+      DEFAULT_ORGANIZATION_NAME: Wedding Hall
+      DEFAULT_PROJECT_NAME: Local Dev
+      AUTH_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-long
+      NEXT_PUBLIC_ENABLE_LOGS: "false"
 
   seed:
     image: postgres:15-alpine

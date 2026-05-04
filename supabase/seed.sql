@@ -374,10 +374,10 @@ end $$;
 
 -- ----------------------------------------------------------------
 -- Local dev test users (all password: 123123). Idempotent.
---   admin@localhost   / 123123  →  is_admin = true
---   test1@localhost   / 123123
---   test2@localhost   / 123123
---   test3@localhost   / 123123
+--   admin@test.com   / 123123  →  is_admin = true
+--   test1@test.com   / 123123
+--   test2@test.com   / 123123
+--   test3@test.com   / 123123
 -- ----------------------------------------------------------------
 do $$
 declare
@@ -388,10 +388,10 @@ declare
 begin
   for v_email, v_name, v_is_admin in
     values
-      ('admin@localhost', 'Local Admin',  true),
-      ('test1@localhost', 'Test User 1',  false),
-      ('test2@localhost', 'Test User 2',  false),
-      ('test3@localhost', 'Test User 3',  false)
+      ('admin@test.com', 'Local Admin',  true),
+      ('test1@test.com', 'Test User 1',  false),
+      ('test2@test.com', 'Test User 2',  false),
+      ('test3@test.com', 'Test User 3',  false)
   loop
     select id into v_user_id from auth.users where email = v_email;
 
@@ -482,9 +482,9 @@ select u.email, p.is_admin, p.full_name
  where u.email in (
    'test@gmail.com',
    'admin@weddinghall.app',
-   'admin@localhost',
-   'test1@localhost',
-   'test2@localhost',
-   'test3@localhost'
+   'admin@test.com',
+   'test1@test.com',
+   'test2@test.com',
+   'test3@test.com'
  )
  order by u.email;
