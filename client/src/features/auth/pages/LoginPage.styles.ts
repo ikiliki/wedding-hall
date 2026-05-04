@@ -23,4 +23,6 @@ export const brandTagline = "wh-stl-login-tag";
 
 export const formWrap = "wh-login-form-card";
 
+export const bannerSuccess = "wh-auth-success wh-login-password-banner";
+
 export const footerBack = "wh-stl-login-footer-back";

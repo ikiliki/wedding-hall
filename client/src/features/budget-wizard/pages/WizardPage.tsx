@@ -3,6 +3,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -33,6 +34,7 @@ import { StepContinueGate } from "@/features/budget-wizard/components/StepContin
 import { StepCompletion } from "@/features/budget-wizard/components/StepCompletion";
 import { StepAuthGate } from "@/features/budget-wizard/components/StepAuthGate";
 import { PersistBudgetAfterAuth } from "@/features/budget-wizard/components/PersistBudgetAfterAuth";
+import type { WizardPostLoginRouterState } from "@/features/budget-wizard/lib/wizard-post-login-router-state";
 
 // Slug ↔ step id (slug uses dashes, step ids use underscores).
 function slugToStepId(slug: string | undefined): WizardStepId | null {
@@ -168,8 +170,13 @@ export function HydrateAndStart() {
 }
 
 function WizardRoutes() {
+  const location = useLocation();
+  const initialPostLoginSave = Boolean(
+    (location.state as WizardPostLoginRouterState | null | undefined)
+      ?.whPostWizardSaveDraft,
+  );
   return (
-    <WizardProvider>
+    <WizardProvider initialPostLoginBudgetDraftSaveRequested={initialPostLoginSave}>
       <PersistBudgetAfterAuth />
       <Routes>
         <Route index element={<HydrateAndStart />} />

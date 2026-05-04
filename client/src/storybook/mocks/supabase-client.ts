@@ -119,24 +119,39 @@ class StorybookAuth {
     return { error: null };
   }
 
-  async exchangeCodeForSession(): Promise<{
-    data: { session: Session; user: User | undefined };
-    error: null;
+  async updateUser(updates: {
+    password?: string;
+  }): Promise<{ data: { user: User }; error: Error | null }> {
+    void updates;
+    return { data: { user: storyUser }, error: null };
+  }
+
+  async exchangeCodeForSession(authCode?: string): Promise<{
+    data: {
+      session: Session;
+      user: User;
+      redirectType?: string | null;
+    };
+    error: Error | null;
   }> {
+    void authCode;
     this.setSession(loggedInSession);
-    return { data: { session: loggedInSession, user: storyUser }, error: null };
+    return {
+      data: {
+        session: loggedInSession,
+        user: storyUser,
+        redirectType: null,
+      },
+      error: null,
+    };
   }
 }
 
 /** Mutable auth for Storybook decorators. */
 export const storybookAuth = new StorybookAuth();
 
-let cachedClient: SupabaseClient | null = null;
+const clientInstance = { auth: storybookAuth } as unknown as SupabaseClient;
 
 export function createClient(): SupabaseClient {
-  if (cachedClient) return cachedClient;
-
-  cachedClient = { auth: storybookAuth } as unknown as SupabaseClient;
-
-  return cachedClient;
+  return clientInstance;
 }

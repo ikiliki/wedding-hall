@@ -27,3 +27,6 @@ export const linkButton = "wh-auth-link-btn";
 export const success = "wh-auth-success";
 
 export const configBanner = "wh-auth-config-banner";
+
+/** Row aligned to end below password — "Forgot password" link. */
+export const toolbarRow = "wh-auth-field-toolbar-row";

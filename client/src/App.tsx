@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthCallbackPage } from "@/features/auth/pages/AuthCallbackPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { UpdatePasswordPage } from "@/features/auth/pages/UpdatePasswordPage";
 import { LandingPage } from "@/features/landing/pages/LandingPage";
 import { WizardPage } from "@/features/budget-wizard/pages/WizardPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
@@ -15,6 +16,10 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route
+        path="/auth/update-password"
+        element={<UpdatePasswordPage />}
+      />
       {/* New multi-step budget wizard. /start, /start/couple, /start/venue, ... */}
       <Route path="/start/*" element={<WizardPage />} />
       {/* Old bookmark: `/onboarding` → wizard */}

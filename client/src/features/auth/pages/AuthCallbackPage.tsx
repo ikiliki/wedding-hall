@@ -4,6 +4,15 @@ import { upsertProfile } from "@/shared/lib/api";
 import { createClient } from "@/shared/lib/supabase";
 import { getPostAuthPath } from "@/shared/lib/post-auth-path";
 
+/** PKCE redirect metadata from `@supabase/auth-js` exchange (recovery vs sign-in). */
+function exchangeRedirectType(data: unknown): string | undefined {
+  if (data && typeof data === "object" && "redirectType" in data) {
+    const v = (data as { redirectType?: unknown }).redirectType;
+    return typeof v === "string" ? v : undefined;
+  }
+  return undefined;
+}
+
 export function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -20,13 +29,18 @@ export function AuthCallbackPage() {
 
     async function run() {
       const supabase = createClient();
-      const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+      const exchange = await supabase.auth.exchangeCodeForSession(authCode);
 
       if (cancelled) return;
 
-      if (error) {
-        console.error("auth/callback exchange error", error);
+      if (exchange.error) {
+        console.error("auth/callback exchange error", exchange.error);
         navigate("/login", { replace: true });
+        return;
+      }
+
+      if (exchangeRedirectType(exchange.data) === "recovery") {
+        navigate("/auth/update-password", { replace: true });
         return;
       }
 

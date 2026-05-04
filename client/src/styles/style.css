@@ -1625,6 +1625,10 @@ select {
   }
 }
 
+.wh-login-password-banner {
+  margin-block-end: 1rem;
+}
+
 /* Email form */
 .wh-auth-form {
   display: flex;
@@ -1667,6 +1671,10 @@ select {
   flex-direction: column;
   gap: 0.5rem;
   text-align: left;
+}
+.wh-auth-field-toolbar-row {
+  display: flex;
+  justify-content: flex-start;
 }
 .wh-auth-label {
   font-size: 0.75rem;

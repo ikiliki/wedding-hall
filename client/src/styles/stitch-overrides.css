@@ -2358,6 +2358,14 @@ body {
   background-color: rgb(251 246 239);
 }
 
+.wh-auth-field-toolbar-row {
+  justify-content: flex-start;
+}
+
+.wh-login-password-banner {
+  margin-block-end: 1rem;
+}
+
 .wh-stl-login-shell {
   box-sizing: border-box;
   min-height: 100vh;

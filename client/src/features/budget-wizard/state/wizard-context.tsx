@@ -8,7 +8,7 @@
 // All types + the context object itself live in `./wizard-types.ts` so
 // React Refresh can hot-reload this provider cleanly.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import type {
   CategoryId,
   CategorySelection,
@@ -56,8 +56,23 @@ function loadFromStorage(): WizardState {
   }
 }
 
-export function WizardProvider({ children }: { children: React.ReactNode }) {
+export type WizardProviderProps = {
+  children: ReactNode;
+  /**
+   * When the user landed on `/start` from `/login`, React Router carries a
+   * one-shot flag in `location.state`; we stash it once (first mount) so deep
+   * wizard navigations cannot drop sessionStorage/session flags.
+   */
+  initialPostLoginBudgetDraftSaveRequested?: boolean;
+};
+
+export function WizardProvider({
+  children,
+  initialPostLoginBudgetDraftSaveRequested = false,
+}: WizardProviderProps) {
   const [state, setState] = useState<WizardState>(() => loadFromStorage());
+  const [postLoginBudgetDraftSaveRequested, setPostLoginBudgetDraftSaveRequested] =
+    useState(() => initialPostLoginBudgetDraftSaveRequested);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -69,27 +84,23 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state]);
 
-  const guestMid = useMemo(() => {
-    if (typeof state.guestMin === "number" && typeof state.guestMax === "number") {
-      return Math.round((state.guestMin + state.guestMax) / 2);
-    }
-    if (typeof state.guestMax === "number") return state.guestMax;
-    if (typeof state.guestMin === "number") return state.guestMin;
-    return 0;
-  }, [state.guestMin, state.guestMax]);
+  let guestMid = 0;
+  if (typeof state.guestMin === "number" && typeof state.guestMax === "number") {
+    guestMid = Math.round((state.guestMin + state.guestMax) / 2);
+  } else if (typeof state.guestMax === "number") {
+    guestMid = state.guestMax;
+  } else if (typeof state.guestMin === "number") {
+    guestMid = state.guestMin;
+  }
 
-  const totals = useMemo(
-    () => computeBudgetTotals(state.selections, guestMid),
-    [state.selections, guestMid],
-  );
+  const totals = computeBudgetTotals(state.selections, guestMid);
+  const totalLines = totals.lines
+    .filter((l) => l.amount > 0)
+    .map((l) => ({ label: l.label, amount: l.amount }));
 
-  const totalLines = useMemo(
-    () =>
-      totals.lines
-        .filter((l) => l.amount > 0)
-        .map((l) => ({ label: l.label, amount: l.amount })),
-    [totals],
-  );
+  const clearPostLoginBudgetDraftSaveRequest = useCallback(() => {
+    setPostLoginBudgetDraftSaveRequested(false);
+  }, []);
 
   const setCouple = useCallback((name1: string, name2: string) => {
     setState((s) => ({ ...s, coupleName1: name1, coupleName2: name2 }));
@@ -143,6 +154,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
 
   const reset = useCallback(() => {
     setState(EMPTY);
+    setPostLoginBudgetDraftSaveRequested(false);
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(STORAGE_KEY);
     }
@@ -206,42 +218,25 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     await saveBudget(payload);
   }, [state, guestMid]);
 
-  const value: Ctx = useMemo(
-    () => ({
-      state,
-      guestMid,
-      total: totals.total,
-      totalLines,
-      setCouple,
-      setDay,
-      setGuestRange,
-      setSubtype,
-      setSelection,
-      setContinuedExtended,
-      setActual,
-      setCelebrationDate,
-      hydrateFromBudget,
-      reset,
-      saveServer,
-    }),
-    [
-      state,
-      guestMid,
-      totals.total,
-      totalLines,
-      setCouple,
-      setDay,
-      setGuestRange,
-      setSubtype,
-      setSelection,
-      setContinuedExtended,
-      setActual,
-      setCelebrationDate,
-      hydrateFromBudget,
-      reset,
-      saveServer,
-    ],
-  );
+  const value: Ctx = {
+    state,
+    guestMid,
+    total: totals.total,
+    totalLines,
+    setCouple,
+    setDay,
+    setGuestRange,
+    setSubtype,
+    setSelection,
+    setContinuedExtended,
+    setActual,
+    setCelebrationDate,
+    hydrateFromBudget,
+    reset,
+    saveServer,
+    postLoginBudgetDraftSaveRequested,
+    clearPostLoginBudgetDraftSaveRequest,
+  };
 
   return (
     <WizardContext.Provider value={value}>{children}</WizardContext.Provider>

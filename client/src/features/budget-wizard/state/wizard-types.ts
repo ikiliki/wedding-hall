@@ -47,6 +47,9 @@ export type Ctx = {
   hydrateFromBudget: (b: WeddingBudget) => void;
   reset: () => void;
   saveServer: (opts?: SaveServerOptions) => Promise<void>;
+  /** One-shot: after login-from-wizard, trigger PUT /api/budget when draft exists. */
+  postLoginBudgetDraftSaveRequested: boolean;
+  clearPostLoginBudgetDraftSaveRequest: () => void;
 };
 
 export const WizardContext = createContext<Ctx | null>(null);

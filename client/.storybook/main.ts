@@ -60,9 +60,32 @@ const config: StorybookConfig = {
   staticDirs: ["../public"],
   viteFinal: async (userConfig) =>
     mergeConfig(userConfig, {
+      // Workspace package `@wedding-hall/shared` lives outside `client/`. Without
+      // this, Vite can 403 module URLs when preview (via MSW handlers) resolves
+      // the shared package — the browser shows "Failed to fetch dynamically
+      // imported module" for `.storybook/preview.tsx`.
+      server: {
+        ...userConfig.server,
+        fs: {
+          ...userConfig.server?.fs,
+          allow: [
+            path.resolve(__dirname, ".."),
+            path.resolve(__dirname, "../.."),
+            ...(userConfig.server?.fs?.allow ?? []),
+          ],
+        },
+      },
       resolve: {
         ...userConfig.resolve,
         alias: mergeSupabaseStorybookAlias(userConfig.resolve?.alias),
+      },
+      optimizeDeps: {
+        ...userConfig.optimizeDeps,
+        include: [
+          ...(userConfig.optimizeDeps?.include ?? []),
+          "msw-storybook-addon",
+          "msw",
+        ],
       },
       define: {
         ...userConfig.define,

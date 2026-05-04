@@ -3,13 +3,12 @@ import {
   type SupabaseClient,
 } from "@supabase/supabase-js";
 
-// Single shared client per browser tab. Multiple `createClient()` calls used
-// to spin up multiple GoTrueClient instances against the same storage key,
-// which Supabase warns about as undefined behaviour.
-let cached: SupabaseClient | null = null;
+// One SDK instance per SPA load. Auth persistence uses sessionStorage instead
+// of Supabase defaults (typically localStorage) so sessions retire with the tab.
+let clientInstance: SupabaseClient | undefined;
 
 export function createClient(): SupabaseClient {
-  if (cached) return cached;
+  if (clientInstance) return clientInstance;
 
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -19,6 +18,18 @@ export function createClient(): SupabaseClient {
     );
   }
 
-  cached = createSupabaseClient(url, key);
-  return cached;
+  const authOptions =
+    typeof window !== "undefined"
+      ? {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: window.sessionStorage,
+        }
+      : undefined;
+
+  clientInstance = createSupabaseClient(url, key, {
+    ...(authOptions ? { auth: authOptions } : {}),
+  });
+  return clientInstance;
 }
