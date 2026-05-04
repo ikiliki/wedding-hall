@@ -80,3 +80,59 @@ export type UpsertProfilePayload = {
   email?: string | null;
   full_name?: string | null;
 };
+
+// ── Vendor management (Phase 2) ──────────────────────────────────────────────
+
+export type VendorCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  /** Links to a WizardStepId in the client budget wizard. Null = not yet linked. */
+  wizard_step_key: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Vendor = {
+  id: string;
+  category_id: string;
+  name: string;
+  phone: string | null;
+  website_url: string | null;
+  photo_url: string | null;
+  description: string | null;
+  city: string | null;
+  price_range: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  /** Joined category when the server includes it. */
+  category?: VendorCategory;
+};
+
+// Admin: create a new vendor category.
+export type CreateCategoryPayload = {
+  name: string;
+  slug: string;
+  wizard_step_key?: string | null;
+  display_order?: number;
+};
+
+// Admin: create a vendor.
+export type CreateVendorPayload = {
+  category_id: string;
+  name: string;
+  phone?: string | null;
+  website_url?: string | null;
+  photo_url?: string | null;
+  description?: string | null;
+  city?: string | null;
+  price_range?: string | null;
+};
+
+// Admin: update a vendor (all fields optional).
+export type UpdateVendorPayload = Partial<CreateVendorPayload> & {
+  is_active?: boolean;
+};

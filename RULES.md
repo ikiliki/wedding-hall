@@ -9,9 +9,21 @@ Binding for every change in this repository.
 
 ## Architecture
 
-- **Client** (`client/`): Vite + React. Feature-based structure under `client/src/features/<feature>/` (components, pages, feature `lib/`). Shared UI and helpers under `client/src/shared/`. Auth runs in the browser (`supabase.auth.*`); **all data calls go through the server** via `client/src/shared/lib/api.ts`. Never call `supabase.from(...)` from the client.
-- **Server** (`server/`): Next.js — the data gateway. Uses the Supabase **anon** key + the user's forwarded JWT, so RLS still enforces ownership. Endpoints documented in `server/src/lib/openapi.ts`. Never add the Supabase **service role** key without an explicit admin use case.
-- **Shared** (`packages/shared/`): `@wedding-hall/shared` workspace package. Cross-package types and the venue tier prices. Both client and server import from here.
+- **Client** (`client/`): Vite + React. Feature-based structure under `client/src/features/<feature>/` (components, pages, feature `lib/`). Shared UI and helpers under `client/src/shared/`. Auth runs in the browser (`supabase.auth.*`); **all data calls go through the server** via `client/src/shared/lib/api.ts`. Never call `supabase.from(...)` from the client. Supabase Storage uploads (`supabase.storage`) from the client are allowed for admin photo uploads.
+- **Server** (`server/`): Next.js — the data gateway. Uses two trust levels:
+  - **Anon key + user JWT** (`supabaseForRequest`) for user-owned data. RLS applies.
+  - **Service role** (`supabaseServiceRole`) for admin endpoints only — `GET|POST /api/admin/categories`, `GET|POST|PUT|DELETE /api/admin/vendors/[id]`. Always verify the caller is in `admin_users` via `requireAdmin()` before using the service-role client.
+- **Shared** (`packages/shared/`): `@wedding-hall/shared` workspace package. Cross-package types (including `Vendor`, `VendorCategory` and their payloads) and the venue tier prices. Both client and server import from here.
+
+### Admin user management
+
+Membership lives in `public.admin_users` (not `profiles.is_admin`). Add an admin by inserting a row:
+
+```sql
+insert into public.admin_users (user_id) values ('<uuid>');
+```
+
+The `POST /api/profiles` endpoint derives `is_admin` by checking `admin_users` via service role. The existing `AdminGate` component reads `profile.is_admin` and requires no change.
 
 ## UX & quality
 

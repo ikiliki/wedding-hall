@@ -3534,3 +3534,382 @@ body {
   justify-content: flex-start;
   gap: 1rem 1.5rem;
 }
+
+/* ================================================================
+   Admin vendor management pages
+   ================================================================ */
+
+/* ── Vendor List ───────────────────────────────────────────────── */
+
+.wh-admin-vl-root {
+  min-block-size: 100dvh;
+  padding: 1.5rem;
+  background: var(--stl-background);
+  color: var(--stl-text-primary);
+  direction: rtl;
+}
+
+.wh-admin-vl-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+.wh-admin-vl-heading {
+  display: inline;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.wh-admin-vl-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem 1rem;
+  background: var(--stl-primary);
+  color: var(--stl-primary-contrast);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+}
+
+.wh-admin-vl-add:hover {
+  opacity: 0.88;
+}
+
+.wh-admin-vl-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-block-end: 1.25rem;
+}
+
+.wh-admin-vl-filter-btn {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--stl-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--stl-text-primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.wh-admin-vl-filter-btn:hover {
+  background: var(--stl-surface-hover);
+}
+
+.wh-admin-vl-filter-btn--active {
+  background: var(--stl-primary);
+  color: var(--stl-primary-contrast);
+  border-color: var(--stl-primary);
+}
+
+.wh-admin-vl-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wh-admin-vl-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--stl-surface);
+  border: 1px solid var(--stl-border);
+  border-radius: 10px;
+}
+
+.wh-admin-vl-card-photo {
+  width: min(4rem, 100%);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.wh-admin-vl-card-photo--placeholder {
+  background: var(--stl-surface-hover);
+}
+
+.wh-admin-vl-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wh-admin-vl-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.wh-admin-vl-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  margin-block-start: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--stl-text-secondary);
+}
+
+.wh-admin-vl-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--stl-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.wh-admin-vl-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.wh-admin-vl-edit,
+.wh-admin-vl-delete {
+  padding: 0.3rem 0.65rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid var(--stl-border);
+  background: transparent;
+  color: var(--stl-text-primary);
+  text-align: center;
+}
+
+.wh-admin-vl-edit:hover {
+  background: var(--stl-surface-hover);
+}
+
+.wh-admin-vl-delete {
+  color: var(--stl-error);
+  border-color: var(--stl-error);
+}
+
+.wh-admin-vl-delete:hover {
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.wh-admin-vl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--stl-text-secondary);
+}
+
+.wh-admin-vl-status {
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: var(--stl-text-secondary);
+}
+
+.wh-link-muted {
+  font-size: 0.85rem;
+  color: var(--stl-text-secondary);
+  text-decoration: none;
+}
+
+.wh-link-muted:hover {
+  text-decoration: underline;
+}
+
+/* ── Vendor Form Page ──────────────────────────────────────────── */
+
+.wh-admin-vfp-root {
+  min-block-size: 100dvh;
+  padding: 1.5rem;
+  background: var(--stl-background);
+  color: var(--stl-text-primary);
+  direction: rtl;
+}
+
+.wh-admin-vfp-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+.wh-admin-vfp-heading {
+  display: inline;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.wh-admin-vfp-card {
+  max-inline-size: min(48rem, 100%);
+}
+
+.wh-admin-vfp-status {
+  font-size: 0.9rem;
+  color: var(--stl-text-secondary);
+  padding: 1rem 0;
+}
+
+/* ── Vendor Form Component ─────────────────────────────────────── */
+
+.wh-vendor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.wh-vendor-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+  gap: 1rem;
+}
+
+.wh-vendor-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.wh-vendor-form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--stl-text-secondary);
+}
+
+.wh-vendor-form-input,
+.wh-vendor-form-textarea,
+.wh-vendor-form-select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--stl-border);
+  border-radius: 6px;
+  background: var(--stl-surface);
+  color: var(--stl-text-primary);
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.wh-vendor-form-input:focus,
+.wh-vendor-form-textarea:focus,
+.wh-vendor-form-select:focus {
+  outline: 2px solid var(--stl-primary);
+  outline-offset: 1px;
+}
+
+.wh-vendor-form-textarea {
+  resize: vertical;
+  min-block-size: 7rem;
+}
+
+.wh-vendor-photo-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wh-vendor-photo-preview {
+  width: 5rem;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--stl-border);
+}
+
+.wh-vendor-photo-placeholder {
+  width: 5rem;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--stl-surface-hover);
+  border: 1px dashed var(--stl-border);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  color: var(--stl-text-secondary);
+}
+
+.wh-vendor-photo-upload-btn {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--stl-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--stl-text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.wh-vendor-photo-upload-btn:hover:not(:disabled) {
+  background: var(--stl-surface-hover);
+}
+
+.wh-vendor-photo-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wh-vendor-uploading {
+  font-size: 0.8rem;
+  color: var(--stl-text-secondary);
+}
+
+.wh-vendor-form-error {
+  font-size: 0.8rem;
+  color: var(--stl-error);
+}
+
+.wh-vendor-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-block-start: 0.5rem;
+}
+
+.wh-vendor-submit {
+  padding: 0.55rem 1.25rem;
+  background: var(--stl-primary);
+  color: var(--stl-primary-contrast);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wh-vendor-submit:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.wh-vendor-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wh-vendor-cancel {
+  padding: 0.55rem 1.25rem;
+  background: transparent;
+  color: var(--stl-text-primary);
+  border: 1px solid var(--stl-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.wh-vendor-cancel:hover:not(:disabled) {
+  background: var(--stl-surface-hover);
+}

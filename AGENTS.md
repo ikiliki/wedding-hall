@@ -56,3 +56,4 @@ All skills live under [`.claude/skills/`](./.claude/skills/):
 - [`.claude/skills/mobile-responsive-css/SKILL.md`](./.claude/skills/mobile-responsive-css/SKILL.md) — mobile-first invariants, per-component checklist.
 - [`.claude/skills/manual-vercel-supabase-runbook/SKILL.md`](./.claude/skills/manual-vercel-supabase-runbook/SKILL.md) — exact steps for Vercel/Supabase dashboard actions.
 - [`.claude/skills/wedding-hall-pr-workflow/SKILL.md`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit format, PR template.
+- [`.claude/skills/admin-vendor-management/SKILL.md`](./.claude/skills/admin-vendor-management/SKILL.md) — admin_users table, vendor catalog, service-role setup, photo upload, category-wizard linking.

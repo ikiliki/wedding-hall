@@ -7,9 +7,14 @@
 // then talks to Supabase with the same JWT so RLS still applies.
 
 import type {
+  CreateCategoryPayload,
+  CreateVendorPayload,
   Profile,
   SaveBudgetPayload,
   UpsertProfilePayload,
+  Vendor,
+  VendorCategory,
+  UpdateVendorPayload,
   WeddingBudget,
 } from "@wedding-hall/shared";
 import { createClient } from "@/shared/lib/supabase";
@@ -169,4 +174,63 @@ export async function saveBudget(
     body: payload,
   });
   return data.budget;
+}
+
+// ---------- Admin: Vendor categories ----------
+
+export async function fetchAdminCategories(): Promise<VendorCategory[]> {
+  const data = await request<{ categories: VendorCategory[] }>("/api/admin/categories");
+  return data.categories;
+}
+
+export async function createAdminCategory(
+  payload: CreateCategoryPayload,
+): Promise<VendorCategory> {
+  const data = await request<{ category: VendorCategory }>("/api/admin/categories", {
+    method: "POST",
+    body: payload,
+  });
+  return data.category;
+}
+
+// ---------- Admin: Vendors ----------
+
+export async function fetchAdminVendors(opts?: {
+  category?: string;
+  includeInactive?: boolean;
+}): Promise<Vendor[]> {
+  const params = new URLSearchParams();
+  if (opts?.category) params.set("category", opts.category);
+  if (opts?.includeInactive) params.set("include_inactive", "true");
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const data = await request<{ vendors: Vendor[] }>(`/api/admin/vendors${qs}`);
+  return data.vendors;
+}
+
+export async function fetchAdminVendor(id: string): Promise<Vendor> {
+  const data = await request<{ vendor: Vendor }>(`/api/admin/vendors/${id}`);
+  return data.vendor;
+}
+
+export async function createAdminVendor(payload: CreateVendorPayload): Promise<Vendor> {
+  const data = await request<{ vendor: Vendor }>("/api/admin/vendors", {
+    method: "POST",
+    body: payload,
+  });
+  return data.vendor;
+}
+
+export async function updateAdminVendor(
+  id: string,
+  payload: UpdateVendorPayload,
+): Promise<Vendor> {
+  const data = await request<{ vendor: Vendor }>(`/api/admin/vendors/${id}`, {
+    method: "PUT",
+    body: payload,
+  });
+  return data.vendor;
+}
+
+export async function deleteAdminVendor(id: string): Promise<void> {
+  await request<void>(`/api/admin/vendors/${id}`, { method: "DELETE" });
 }

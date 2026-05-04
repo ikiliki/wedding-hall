@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { UpsertProfilePayload } from "@wedding-hall/shared";
 import { corsPreflight, withCors } from "@/lib/cors";
-import { supabaseForRequest } from "@/lib/supabase";
+import { supabaseForRequest, supabaseServiceRole } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -67,5 +67,20 @@ export async function POST(request: Request) {
     );
   }
 
-  return withCors(request, NextResponse.json({ profile: data }));
+  // Derive is_admin from admin_users table (service role, so RLS is bypassed).
+  // Failure is non-fatal: fall back to false so the profile upsert still succeeds.
+  let is_admin = false;
+  try {
+    const adminDb = supabaseServiceRole();
+    const { data: adminRow } = await adminDb
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+    is_admin = !!adminRow;
+  } catch {
+    // service role key not configured in this environment — admin = false
+  }
+
+  return withCors(request, NextResponse.json({ profile: { ...data, is_admin } }));
 }

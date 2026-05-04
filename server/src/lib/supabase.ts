@@ -1,10 +1,11 @@
-// Server-side Supabase client factory.
+// Server-side Supabase client factories.
 //
-// Trust model: the browser keeps doing auth (signin/signup/callback) directly
-// against Supabase Auth. Every protected request to *this* server arrives with
-// the user's JWT in the `Authorization` header. We forward that header into a
-// per-request Supabase client so Postgres RLS still enforces row ownership —
-// we never use a service-role key here.
+// Two trust levels:
+//   supabaseForRequest() — anon key + caller JWT; RLS still applies.
+//     Used for all user-owned data (profiles, wedding_budgets).
+//   supabaseServiceRole() — service-role key; bypasses RLS.
+//     Used ONLY for admin endpoints (vendor CRUD, admin_users checks).
+//     Never expose the service-role key to the browser.
 
 import {
   createClient as createSupabaseClient,
@@ -28,6 +29,26 @@ export function readSupabaseEnv(): SupabaseEnv {
     );
   }
   return { url, anonKey };
+}
+
+// Service-role client — bypasses RLS. Use only in admin route handlers
+// after asserting the caller is in admin_users.
+export function supabaseServiceRole(): SupabaseClient {
+  const url = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) {
+    throw new Error(
+      "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. " +
+        "Add SUPABASE_SERVICE_ROLE_KEY to server/.env.local (or Vercel).",
+    );
+  }
+  return createSupabaseClient(url, serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
 }
 
 // Build a Supabase client that runs as the calling user (RLS applies).

@@ -3,10 +3,6 @@ import { LogoutButton } from "@/shared/components/LogoutButton";
 import { AdminGate } from "@/features/admin/components/AdminGate";
 import * as styles from "./AdminHomePage.styles";
 
-// Phase 1+ admin placeholder. Same Supabase project, same server, same
-// client deploy — the route is gated on `profiles.is_admin`. Real admin
-// features (vendors, wizard questions, cross-user views) are deferred
-// until we agree on the service-role exception in RULES.md / PLAN.md.
 export function AdminHomeContent() {
   return (
     <main className={styles.root}>
@@ -28,16 +24,17 @@ export function AdminHomeContent() {
           <p className={styles.headerEyebrow}>ניהול מערכת</p>
           <h1 className={styles.headerTitle}>כלי ניהול Wedding Hall</h1>
           <p className={styles.headerLede}>
-            דף בית זמני לכלי ניהול. קטלוג ספקים, שאלון תקציב ודוחות בין־משתמשים
-            יופיעו כאן כשנוסיף אותם בשלבים הבאים.
+            ניהול ספקים, קטגוריות ותוכן האפליקציה.
           </p>
         </section>
 
         <section className={styles.tilesGrid}>
-          <Tile
+          <ActiveTile
             eyebrow="ספקים"
             title="קטלוג ספקים"
-            body="הוספה ועריכה של ספקים שמשתמשים יוכלו לעיין בהם. בקרוב."
+            body="הוספה ועריכה של ספקים לפי קטגוריה."
+            href="/admin/vendors"
+            cta="פתח קטלוג"
           />
           <Tile
             eyebrow="שאלון"
@@ -47,11 +44,32 @@ export function AdminHomeContent() {
           <Tile
             eyebrow="משתמשים"
             title="משתמשים ותקציבים"
-            body="דוחות בין־משתמשים — נדחה עד שנאשר חריגת מפתח שירות (ראו RULES.md)."
+            body="דוחות בין־משתמשים — בתכנון."
           />
         </section>
       </div>
     </main>
+  );
+}
+
+type ActiveTileProps = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+};
+
+function ActiveTile({ eyebrow, title, body, href, cta }: ActiveTileProps) {
+  return (
+    <Link to={href} className={styles.tile} style={{ textDecoration: "none" }}>
+      <div>
+        <p className={styles.tileEyebrow}>{eyebrow}</p>
+        <h2 className={styles.tileTitle}>{title}</h2>
+        <p className={styles.tileBody}>{body}</p>
+      </div>
+      <p className={styles.tileCtaMuted}>{cta} →</p>
+    </Link>
   );
 }
 

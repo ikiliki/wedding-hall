@@ -6,6 +6,8 @@ import { WizardPage } from "@/features/budget-wizard/pages/WizardPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { BudgetPage } from "@/features/budget-view/pages/BudgetPage";
 import { AdminHomePage } from "@/features/admin/pages/AdminHomePage";
+import { VendorListPage } from "@/features/admin/pages/VendorListPage";
+import { VendorFormPage } from "@/features/admin/pages/VendorFormPage";
 
 export default function App() {
   return (
@@ -19,8 +21,11 @@ export default function App() {
       <Route path="/onboarding" element={<Navigate to="/start" replace />} />
       <Route path="/dashboard/*" element={<DashboardPage />} />
       <Route path="/budget" element={<BudgetPage />} />
-      {/* Admin: inline staff sign-in at `/admin`, then `profiles.is_admin`. */}
+      {/* Admin area — gated on admin_users table via AdminGate */}
       <Route path="/admin" element={<AdminHomePage />} />
+      <Route path="/admin/vendors" element={<VendorListPage />} />
+      <Route path="/admin/vendors/new" element={<VendorFormPage mode="create" />} />
+      <Route path="/admin/vendors/:id/edit" element={<VendorFormPage mode="edit" />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

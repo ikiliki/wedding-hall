@@ -373,13 +373,118 @@ begin
 end $$;
 
 -- ----------------------------------------------------------------
+-- Local dev test users (all password: 123123). Idempotent.
+--   admin@localhost   / 123123  →  is_admin = true
+--   test1@localhost   / 123123
+--   test2@localhost   / 123123
+--   test3@localhost   / 123123
+-- ----------------------------------------------------------------
+do $$
+declare
+  v_user_id  uuid;
+  v_email    text;
+  v_name     text;
+  v_is_admin boolean;
+begin
+  for v_email, v_name, v_is_admin in
+    values
+      ('admin@localhost', 'Local Admin',  true),
+      ('test1@localhost', 'Test User 1',  false),
+      ('test2@localhost', 'Test User 2',  false),
+      ('test3@localhost', 'Test User 3',  false)
+  loop
+    select id into v_user_id from auth.users where email = v_email;
+
+    if v_user_id is null then
+      v_user_id := gen_random_uuid();
+
+      insert into auth.users (
+        instance_id, id, aud, role, email, encrypted_password,
+        email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+        created_at, updated_at,
+        confirmation_token, email_change, email_change_token_new, recovery_token
+      ) values (
+        '00000000-0000-0000-0000-000000000000',
+        v_user_id, 'authenticated', 'authenticated',
+        v_email,
+        crypt('123123', gen_salt('bf')),
+        now(),
+        '{"provider":"email","providers":["email"]}'::jsonb,
+        jsonb_build_object('full_name', v_name),
+        now(), now(), '', '', '', ''
+      );
+
+      insert into auth.identities (
+        id, user_id, identity_data, provider, provider_id,
+        last_sign_in_at, created_at, updated_at
+      ) values (
+        gen_random_uuid(), v_user_id,
+        jsonb_build_object(
+          'sub', v_user_id::text,
+          'email', v_email,
+          'email_verified', true,
+          'phone_verified', false
+        ),
+        'email', v_user_id::text,
+        now(), now(), now()
+      );
+
+      raise notice 'Created % (id %)', v_email, v_user_id;
+    else
+      update auth.users
+         set email_confirmed_at  = coalesce(email_confirmed_at, now()),
+             encrypted_password  = crypt('123123', gen_salt('bf')),
+             confirmation_token  = '',
+             recovery_token      = '',
+             updated_at          = now()
+       where id = v_user_id;
+
+      insert into auth.identities (
+        id, user_id, identity_data, provider, provider_id,
+        last_sign_in_at, created_at, updated_at
+      )
+      select gen_random_uuid(), v_user_id,
+             jsonb_build_object(
+               'sub', v_user_id::text,
+               'email', v_email,
+               'email_verified', true,
+               'phone_verified', false
+             ),
+             'email', v_user_id::text,
+             now(), now(), now()
+      where not exists (
+        select 1 from auth.identities
+        where user_id = v_user_id and provider = 'email'
+      );
+
+      raise notice 'Refreshed %', v_email;
+    end if;
+
+    insert into public.profiles (id, email, full_name, is_admin)
+    values (v_user_id, v_email, v_name, v_is_admin)
+    on conflict (id) do update set
+      email      = excluded.email,
+      full_name  = excluded.full_name,
+      is_admin   = excluded.is_admin;
+  end loop;
+end $$;
+
+-- ----------------------------------------------------------------
 -- Verification (these results should appear in the editor result panel)
 -- ----------------------------------------------------------------
 select
   (select count(*) from public.profiles)         as profiles_rows,
-  (select count(*) from public.wedding_budgets)  as wedding_budgets_rows,
-  (select id from auth.users where email = 'test@gmail.com') as test_user_id,
-  (select id from auth.users where email = 'admin@weddinghall.app') as admin_user_id,
-  (select is_admin from public.profiles p
-     join auth.users u on u.id = p.id
-    where u.email = 'admin@weddinghall.app') as admin_profile_flag;
+  (select count(*) from public.wedding_budgets)  as wedding_budgets_rows;
+
+select u.email, p.is_admin, p.full_name
+  from auth.users u
+  join public.profiles p on p.id = u.id
+ where u.email in (
+   'test@gmail.com',
+   'admin@weddinghall.app',
+   'admin@localhost',
+   'test1@localhost',
+   'test2@localhost',
+   'test3@localhost'
+ )
+ order by u.email;

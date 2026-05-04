@@ -1,0 +1,16 @@
+export const form = "wh-vendor-form";
+export const grid = "wh-vendor-form-grid";
+export const fieldGroup = "wh-vendor-form-field";
+export const label = "wh-vendor-form-label";
+export const input = "wh-vendor-form-input";
+export const textarea = "wh-vendor-form-textarea";
+export const select = "wh-vendor-form-select";
+export const photoSection = "wh-vendor-photo-section";
+export const photoPreview = "wh-vendor-photo-preview";
+export const photoPlaceholder = "wh-vendor-photo-placeholder";
+export const photoUploadBtn = "wh-vendor-photo-upload-btn";
+export const uploadingLabel = "wh-vendor-uploading";
+export const errorMsg = "wh-vendor-form-error";
+export const actions = "wh-vendor-form-actions";
+export const submitBtn = "wh-vendor-submit";
+export const cancelBtn = "wh-vendor-cancel";

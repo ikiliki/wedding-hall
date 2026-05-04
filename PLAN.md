@@ -59,15 +59,45 @@ Source of truth in-repo: `packages/shared/src/venue-pricing.ts` (re-exported
 to the client as `client/src/shared/lib/venue-pricing.ts`; used server-side
 by `server/src/lib/budget.ts`).
 
-## Future phases (NOT in Phase 1, do not build yet)
+## Phase 2 (current — admin vendors)
 
-- More budget questions (catering, photography, music, decor, etc.)
-- Vendor directory
-- Purchase through us (marketplace)
-- Wedding website / save-the-date
-- Actual vs estimated budget tracking
-- Server endpoints that require the Supabase **service role** (admin /
-  cross-user reads). The Phase 1 `/admin` route is a placeholder only —
-  it gates on `profiles.is_admin` and never bypasses RLS. Real admin
-  features (vendor CRUD, wizard-question editing, cross-user user
-  lists) require the service-role exception, deliberately deferred.
+- **`admin_users` table** — canonical source of admin membership. Replaces
+  `profiles.is_admin` flag. Server reads this via the service role.
+- **`vendor_categories` table** — taxonomy linked to wizard steps via
+  `wizard_step_key` (matches `WizardStepId`).
+- **`vendors` table** — one row per vendor. Soft-deleted via `is_active`.
+  Photo stored in Supabase Storage bucket `vendor-photos`.
+
+### Phase 2 routes (admin sub-routes)
+
+- `/admin` — updated home page; Vendor tile is a live link.
+- `/admin/vendors` — vendor list filtered by category, includes inactive toggle.
+- `/admin/vendors/new` — create vendor form (photo upload, all fields).
+- `/admin/vendors/:id/edit` — edit existing vendor.
+
+### Phase 2 server endpoints (require `SUPABASE_SERVICE_ROLE_KEY`)
+
+All admin endpoints gate on `admin_users` via the service role before
+performing any data operation.
+
+- `GET /api/admin/categories` — list all vendor categories.
+- `POST /api/admin/categories` — create a category.
+- `GET /api/admin/vendors` — list vendors (filterable by category, inactive).
+- `POST /api/admin/vendors` — create vendor.
+- `GET /api/admin/vendors/[id]` — get one vendor.
+- `PUT /api/admin/vendors/[id]` — update vendor fields.
+- `DELETE /api/admin/vendors/[id]` — soft-delete (set `is_active = false`).
+
+### Phase 2 Supabase Storage
+
+Bucket: `vendor-photos` (public, read-only CDN). Upload allowed only for
+rows in `admin_users`. See skill for manual setup steps.
+
+## Future phases (NOT in scope yet)
+
+- Vendor directory visible to regular users.
+- Purchase through us (marketplace).
+- Wedding website / save-the-date.
+- Actual vs estimated budget tracking.
+- Wizard-question editing UI for admins.
+- Cross-user user lists / reports (requires service role, deliberately deferred).
