@@ -2,6 +2,27 @@
 
 How Claude proposes changes in this repo. Treat this as the contract Claude follows when the user asks "create a PR".
 
+If the request is specifically "verify an issue that already has a linked PR," use [`issue-pr-local-verification`](../issue-pr-local-verification/SKILL.md) first, then return here for branch/PR hygiene.
+
+## Issue ↔ PR linkage (mandatory)
+
+Every PR opened from this repo **must** link back to the issue it addresses, both for `Closes #N` auto-close on merge and so [`issue-pr-local-verification`](../issue-pr-local-verification/SKILL.md) can pick the pair up automatically. No exceptions — even one-line fixes:
+
+1. **In the branch slug**, optionally include the issue number: `fix/8-vendor-form-empty-categories`.
+2. **In the PR body**, the **first line** of the **Summary** section must be one of GitHub's auto-close keywords + the issue number:
+   - `Closes #8` — bug fix
+   - `Fixes #8` — bug fix (synonym)
+   - `Resolves #8` — feature / chore
+   GitHub renders this as a "Linked issues" badge on the PR and auto-closes the issue when the PR merges into `main`.
+3. **After `gh pr create`**, post a back-pointer comment on the issue so reviewers see the PR from the issue side too:
+   ```bash
+   gh issue comment <ISSUE_NUMBER> --repo ikiliki/wedding-hall --body "Linked PR: #<PR_NUMBER> — <pr-url>"
+   ```
+4. If the issue is in a different repo or there is no GitHub issue (rare), open a tracking issue first and link to it the same way. Do not open a PR without a paired issue.
+5. If a PR addresses multiple issues, list each with its own keyword on its own line (`Closes #8` / `Closes #11`). Do not chain them in one sentence — GitHub only auto-links and auto-closes the keyword form.
+
+When [`issue-pr-local-verification`](../issue-pr-local-verification/SKILL.md) is run later, it relies on this linkage to pull the issue body, repro steps, and acceptance criteria for the validation pass.
+
 ## Branch naming
 
 - `feat/<short-slug>` — new feature.
@@ -48,8 +69,12 @@ Per `.cursor/rules/finishing-checklist.mdc`:
 
 ## PR description template
 
+The first line of `## Summary` (or `## What`) **must** be a `Closes #N` / `Fixes #N` / `Resolves #N` reference — see [Issue ↔ PR linkage](#issue--pr-linkage-mandatory) above.
+
 ````markdown
-## What
+## Summary
+
+Closes #<ISSUE_NUMBER>.
 
 One paragraph. Why this PR exists, what it does at a product level.
 
@@ -89,8 +114,22 @@ The Cowork sandbox cannot push to GitHub for the user. Claude prepares the branc
 # from repo root, branch already created by Claude
 git push -u origin <branch-name>
 
-# Either open in browser:
-gh pr create --base main --head <branch-name> --fill --web
+# Open the PR (HEREDOC body so the `Closes #N` line is preserved verbatim):
+gh pr create --repo ikiliki/wedding-hall --base main --head <branch-name> \
+  --title "<type>(<scope>): <subject>" \
+  --body "$(cat <<'EOF'
+## Summary
+
+Closes #<ISSUE_NUMBER>.
+
+…
+EOF
+)"
+
+# Then back-link from the issue side:
+gh issue comment <ISSUE_NUMBER> --repo ikiliki/wedding-hall \
+  --body "Linked PR: #<PR_NUMBER> — <pr-url>"
+
 # Or, without gh, paste this URL:
 # https://github.com/ikiliki/wedding-hall/compare/main...<branch-name>?expand=1
 ```
@@ -108,3 +147,5 @@ git checkout master-server && git merge --ff-only main && git push   # server de
 - Don't push to `main` directly.
 - Don't merge a PR that doesn't have a Manual steps section when SQL or env changed.
 - Don't open a PR without `npm run lint && npm run build` passing.
+- Don't open a PR without a `Closes #N` / `Fixes #N` / `Resolves #N` reference in the body. Open a tracking issue first if none exists.
+- Don't rely on the PR auto-close keyword alone — also post the back-link comment on the issue so [`issue-pr-local-verification`](../issue-pr-local-verification/SKILL.md) and human reviewers see the pair from both sides.
