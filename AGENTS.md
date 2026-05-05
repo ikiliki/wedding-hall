@@ -47,6 +47,10 @@ Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor
 
 ## Skills
 
+**Using skills:** Before substantial work or operational runbooks, **look up** whether a skill applies. Scan [`.claude/skills/`](./.claude/skills/) for a `SKILL.md` whose topic matches the task (deploy, env, E2E, Supabase CLI, Docker, budget wizard, mobile CSS, vendor admin, Storybook, signup debug, PR workflow, etc.). **Read** that file and **follow** it—including steps, guardrails, and naming—rather than improvising parallel instructions. When several areas overlap (for example layout plus budget data), read **every** relevant skill.
+
+**Improving skills:** Whenever experience exposes a wrong or incomplete runbook (failed attempt, CI surprise, outdated command, repeated correction), treat updating the skill as part of done — follow [`.claude/skills/repo-skills-maintenance/SKILL.md`](./.claude/skills/repo-skills-maintenance/SKILL.md) so instructions stay aligned with reality.
+
 All skills live under [`.claude/skills/`](./.claude/skills/):
 
 - [`.claude/skills/wedding-hall-deploy/SKILL.md`](./.claude/skills/wedding-hall-deploy/SKILL.md) — branches, Vercel, Supabase redirect checklist.
@@ -61,5 +65,7 @@ All skills live under [`.claude/skills/`](./.claude/skills/):
 - [`.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md`](./.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md) — delete Playwright prod E2E users (`wh-e2e-%`) via MCP **`execute_sql`** or **`npm run supabase:cleanup-e2e-users`**; not a full DB reset.
 - [`.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md`](./.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md) — prod Playwright: grant admin via CLI, admin creates vendor, couple sees vendor on **`/dashboard/vendors`**.
 - [`.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md`](./.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md) — same **`tests/e2e-prod`** specs against **`docker compose`** (`npm run test:e2e:docker`), seeded admin — no cloud deploy.
+- **Playwright MCP** — Microsoft [`@playwright/mcp`](https://playwright.dev/mcp/installation); optional via [`.cursor/mcp.json`](./.cursor/mcp.json). Use with production URL **`https://wedding-hall-gamma.vercel.app`** for exploratory browser automation (see [wedding-hall-e2e-admin-vendor-flow](.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md) § Exploratory UI).
 - [`.claude/skills/wedding-hall-pr-workflow/SKILL.md`](./.claude/skills/wedding-hall-pr-workflow/SKILL.md) — branch naming, commit format, PR template.
+- [`.claude/skills/repo-skills-maintenance/SKILL.md`](./.claude/skills/repo-skills-maintenance/SKILL.md) — when and how to edit skills after failures, tooling changes, or new best practices; keep `AGENTS.md` / `CLAUDE.md` indexes in sync.
 - [`.claude/skills/admin-vendor-management/SKILL.md`](./.claude/skills/admin-vendor-management/SKILL.md) — admin_users table, vendor catalog, service-role setup, photo upload, category-wizard linking.

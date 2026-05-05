@@ -1,6 +1,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { fillWizardThroughVenue } from "./helpers/wizard-through-venue";
+import { attachResponseLogger } from "./helpers/response-logger";
 
 const SCREENSHOT_DIR = path.join(
   process.cwd(),
@@ -23,13 +25,6 @@ function shouldRun(): boolean {
       process.env.E2E_USER1_PASSWORD &&
       process.env.E2E_USER2_EMAIL &&
       process.env.E2E_USER2_PASSWORD,
-  );
-}
-
-/** Avoid false positives when benign copy mentions “אימייל”. */
-function looksLikeEmailConfirmationBlocker(text: string): boolean {
-  return /לקבלת קישור אימות|Verify your email|confirm your email address|קישור לאימות החשבון/i.test(
-    text,
   );
 }
 
@@ -81,42 +76,7 @@ async function screenshotChrome(
   );
 }
 
-/** Couple → date → guests → type → venue; Next from venue opens auth gate at /start/food-upgrade. */
-async function fillWizardThroughVenue(
-  page: Page,
-  couple1: string,
-  couple2: string,
-): Promise<void> {
-  // Avoid relying on `/start` → couple redirect (hydrate can stick if a chunk 404s).
-  await page.goto("/start/couple", { waitUntil: "domcontentloaded" });
-  await page.locator("#name1").waitFor({ state: "visible", timeout: 60_000 });
-
-  await page.locator("#name1").fill(couple1);
-  await page.locator("#name2").fill(couple2);
-  await page.getByRole("button", { name: /המשך/ }).click();
-  await expect(page).toHaveURL(/\/start\/date/);
-
-  await page.getByRole("radio", { name: /ראשון עד שלישי/ }).click();
-  await page.locator("#celebration-date").fill("2030-07-15");
-  await page.getByRole("button", { name: /המשך/ }).click();
-  await expect(page).toHaveURL(/\/start\/guests/);
-
-  await page.getByRole("button", { name: /המשך/ }).click();
-  await expect(page).toHaveURL(/\/start\/type/);
-
-  await page.getByRole("button", { name: /המשך/ }).click();
-  await expect(page).toHaveURL(/\/start\/venue/);
-
-  await page.getByRole("radio", { name: /ממוצע/ }).click();
-  await page.getByRole("button", { name: /המשך/ }).click();
-  await expect(page).toHaveURL(/\/start\/food-upgrade/);
-
-  await expect(
-    page.getByRole("heading", { name: /הגיע הזמן לשמור את ההתקדמות/ }),
-  ).toBeVisible();
-}
-
-test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
+test.describe("production wizard (auth gate — existing users sign in)", () => {
   test.beforeEach(({ }, testInfo) => {
     testInfo.skip(
       !shouldRun(),
@@ -124,10 +84,11 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
     );
   });
 
-  test("user 1: draft through venue → gate → sign up → resume questionnaire", async ({
+  test("user 1: draft through venue → gate → sign in → resume questionnaire", async ({
     page,
   }, testInfo) => {
     const browserErrors = attachBrowserErrorListeners(page);
+    const flushNetworkErrors = attachResponseLogger(page, testInfo);
     try {
       await fillWizardThroughVenue(page, "E2E אחד", "משתמש");
 
@@ -148,7 +109,7 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
         "Login page with returnTo (user 1)",
       );
 
-      await page.getByRole("tab", { name: /הרשמה חדשה/ }).click();
+      await page.getByRole("tab", { name: /כניסה למערכת/ }).click();
       await page.locator("#email").fill(requireEnv("E2E_USER1_EMAIL"));
       await page.locator("#password").fill(requireEnv("E2E_USER1_PASSWORD"));
 
@@ -160,19 +121,9 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
         { timeout: 120_000 },
       );
 
-      await page.getByRole("button", { name: /פתיחת חשבון/ }).click();
+      await page.getByRole("button", { name: /התחברות/ }).click();
 
       await expect(page).toHaveURL(/\/start\/food-upgrade/, { timeout: 120_000 });
-
-      const infoMaybe = page.locator('[role="status"]');
-      if ((await infoMaybe.count()) > 0) {
-        const txt = await infoMaybe.first().innerText().catch(() => "");
-        if (looksLikeEmailConfirmationBlocker(txt)) {
-          throw new Error(
-            `Signup did not return an immediate session (email confirmation?). Message: ${txt.trim()}`,
-          );
-        }
-      }
 
       await putBudget;
 
@@ -185,7 +136,7 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
       await screenshotChrome(
         page,
         "user1-food-upgrade",
-        "Food upgrade step after signup (user 1)",
+        "Food upgrade step after sign-in (user 1)",
       );
 
       await page.getByRole("radio", { name: /לא, נשארים בסטנדרט/ }).click();
@@ -193,6 +144,7 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
       await expect(page).toHaveURL(/\/start\/bar/);
     } finally {
       await attachErrorsIfAny(testInfo, browserErrors);
+      await flushNetworkErrors();
     }
   });
 
@@ -205,6 +157,7 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
     });
     const page = await context.newPage();
     const browserErrors = attachBrowserErrorListeners(page);
+    const flushNetworkErrors = attachResponseLogger(page, testInfo);
 
     try {
       await fillWizardThroughVenue(page, "E2E שני", "חדש");
@@ -218,7 +171,7 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
 
       await screenshotChrome(page, "user2-login", "Login page (user 2)");
 
-      await page.getByRole("tab", { name: /הרשמה חדשה/ }).click();
+      await page.getByRole("tab", { name: /כניסה למערכת/ }).click();
       await page.locator("#email").fill(requireEnv("E2E_USER2_EMAIL"));
       await page.locator("#password").fill(requireEnv("E2E_USER2_PASSWORD"));
 
@@ -230,19 +183,9 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
         { timeout: 120_000 },
       );
 
-      await page.getByRole("button", { name: /פתיחת חשבון/ }).click();
+      await page.getByRole("button", { name: /התחברות/ }).click();
 
       await expect(page).toHaveURL(/\/start\/food-upgrade/, { timeout: 120_000 });
-
-      const infoMaybe2 = page.locator('[role="status"]');
-      if ((await infoMaybe2.count()) > 0) {
-        const txt = await infoMaybe2.first().innerText().catch(() => "");
-        if (looksLikeEmailConfirmationBlocker(txt)) {
-          throw new Error(
-            `Signup did not return an immediate session (email confirmation?). Message: ${txt.trim()}`,
-          );
-        }
-      }
 
       await putBudget;
 
@@ -254,7 +197,7 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
       await screenshotChrome(
         page,
         "user2-food-upgrade",
-        "Food upgrade step after signup (user 2)",
+        "Food upgrade step after sign-in (user 2)",
       );
 
       await page.getByRole("radio", { name: /לא, נשארים בסטנדרט/ }).click();
@@ -262,6 +205,7 @@ test.describe("production new-user wizard (auth gate at food-upgrade)", () => {
       await expect(page).toHaveURL(/\/start\/bar/);
     } finally {
       await attachErrorsIfAny(testInfo, browserErrors);
+      await flushNetworkErrors();
       try {
         await context.close();
       } catch {

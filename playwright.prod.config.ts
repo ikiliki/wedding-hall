@@ -5,7 +5,7 @@ import path from "node:path";
  * Production (or staging) E2E against the deployed Vite client.
  *
  * Required env:
- * - PLAYWRIGHT_BASE_URL — client origin, e.g. https://your-app.vercel.app
+ * - PLAYWRIGHT_BASE_URL — client origin (production: https://wedding-hall-gamma.vercel.app)
  *
  * Optional:
  * - CI — when set, forbids test.only and enables retries
@@ -23,7 +23,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  reporter: "list",
+  reporter: [
+    ["list"],
+    ["./tests/e2e-prod/reporters/github-issue-reporter.ts"],
+  ],
+  globalSetup: "./tests/e2e-prod/global-setup.ts",
   outputDir: path.join("test-results", "e2e-prod-output"),
   use: {
     ...devices["Desktop Chrome"],

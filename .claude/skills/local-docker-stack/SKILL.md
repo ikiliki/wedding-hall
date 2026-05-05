@@ -29,6 +29,8 @@ docker compose logs -f seed
 Then open:
 
 - Client → <http://localhost:5173>
+
+Playwright E2E against this stack (same specs as prod): [wedding-hall-e2e-docker-flow](../wedding-hall-e2e-docker-flow/SKILL.md) — `npm run test:e2e:docker`.
 - Storybook → <http://localhost:6006> — `docker compose up -d --build storybook` (UI-only; MSW + mock Supabase; no DB/server required). To run the full stack **and** Storybook, use `docker compose up -d --build` (all services).
 - Server health → <http://localhost:3001/api/health>
 - Server docs → <http://localhost:3001/docs>

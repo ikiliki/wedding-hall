@@ -7,6 +7,8 @@ description: Run the same prod Playwright specs (`tests/e2e-prod`) against the l
 
 Use this when **production is not deployed** or you want a **repeatable full stack** before shipping.
 
+**Vercel production** (live client): **`https://wedding-hall-gamma.vercel.app`** — use **`npm run test:e2e:prod`** + `PLAYWRIGHT_BASE_URL` there; see [wedding-hall-e2e-admin-vendor-flow](../wedding-hall-e2e-admin-vendor-flow/SKILL.md). This Docker skill is **only** for **`http://localhost:5173`**.
+
 It pairs with:
 
 - [`local-docker-stack`](../local-docker-stack/SKILL.md) — bring services up.
@@ -15,7 +17,7 @@ It pairs with:
 ## What runs
 
 - Config: [`playwright.docker.config.ts`](../../../playwright.docker.config.ts) — defaults **`PLAYWRIGHT_BASE_URL=http://localhost:5173`**.
-- Tests: [`tests/e2e-prod/`](../../../tests/e2e-prod/) (wizard + admin/vendor/couple).
+- Tests: [`tests/e2e-prod/`](../../../tests/e2e-prod/) — order **`01`** → **`02`** → **`03`**. Wizard **`01`** signs **in** with existing users; **`03`** registers then deletes one **`wh-e2e-signup-*`** user.
 - Playwright runs **on the host** (your machine) and drives the browser against **`http://localhost:5173`** — the **`client`** container. Nothing runs Playwright *inside* a container.
 
 ## One-time: stack up
@@ -45,15 +47,12 @@ Set these in your shell **before** `npm run test:e2e:docker` (Playwright does no
 | Variable | Docker recommendation |
 |----------|------------------------|
 | `PLAYWRIGHT_BASE_URL` | Omit to use default `http://localhost:5173`, or set explicitly |
-| **Wizard tests** (`wizard-new-user.spec.ts`) | |
-| `E2E_USER1_EMAIL` | **Unique each run** (signup creates a new Auth user). Example: `wh-docker-u1-<timestamp>@yourdomain.com` |
-| `E2E_USER1_PASSWORD` | Any password meeting app rules (e.g. `Testpw1!`) |
-| `E2E_USER2_EMAIL` | **Different** from user 1 |
-| `E2E_USER2_PASSWORD` | Same pattern |
-| **Admin + vendor test** (`admin-vendor-public.spec.ts`) | |
-| `E2E_ADMIN_EMAIL` | **`admin@weddinghall.app`** — seeded in [`supabase/seed.sql`](../../../supabase/seed.sql) |
-| `E2E_ADMIN_PASSWORD` | **`Admin!2026`** — same seed |
-| `E2E_USER1_EMAIL` / `E2E_USER1_PASSWORD` | Same couple account as wizard **or** another seeded/demo user — **only needs to log in** for `/dashboard/vendors` |
+| `E2E_USER1_EMAIL` / `E2E_USER1_PASSWORD` | **Existing** Auth users — e.g. seeded **`test@gmail.com` / `test1234`** for `01` (see [local-docker-stack](../local-docker-stack/SKILL.md)) |
+| `E2E_USER2_EMAIL` / `E2E_USER2_PASSWORD` | Second **existing** account, different from user 1 |
+| `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | **`admin@weddinghall.app` / `Admin!2026`** for `02` |
+| `SUPABASE_URL` | For **`03` only** — `http://localhost:54321` (host → gateway) |
+| `SUPABASE_SERVICE_ROLE_KEY` | For **`03` cleanup** — same service JWT as `studio` / `server` in [`docker-compose.yml`](../../../docker-compose.yml) |
+| `E2E_SIGNUP_PASSWORD` | Optional — `03` disposable signup (default `WhSignup1!`) |
 
 **Do not set `E2E_AUTO_GRANT_ADMIN=1` for Docker.** That flag shells out to **`supabase db query --linked`** (cloud project). Local Docker already has `admin_users` for `admin@weddinghall.app` from `seed.sql`.
 
@@ -63,14 +62,18 @@ The **`server`** container must include **`SUPABASE_SERVICE_ROLE_KEY`** (well-kn
 
 ```powershell
 $env:PLAYWRIGHT_BASE_URL="http://localhost:5173"
+$env:SUPABASE_URL="http://localhost:54321"
+$env:SUPABASE_SERVICE_ROLE_KEY="<paste service_role JWT from docker-compose.yml server/studio>"
 $env:E2E_ADMIN_EMAIL="admin@weddinghall.app"
 $env:E2E_ADMIN_PASSWORD="Admin!2026"
-$env:E2E_USER1_EMAIL="wh-docker-u1-001@example.com"
-$env:E2E_USER1_PASSWORD="Testpw1!"
-$env:E2E_USER2_EMAIL="wh-docker-u2-001@example.com"
-$env:E2E_USER2_PASSWORD="Testpw2!"
+$env:E2E_USER1_EMAIL="test@gmail.com"
+$env:E2E_USER1_PASSWORD="test1234"
+$env:E2E_USER2_EMAIL="second-user@example.com"
+$env:E2E_USER2_PASSWORD="SecurePass2!"
 npm run test:e2e:docker
 ```
+
+(`E2E_USER2_*` must be a **second account you created once** in local Auth if `test@gmail.com` is the only seed — or create user 2 manually / skip **`03`** by omitting `SUPABASE_*` so only **`01`**+**`02`** run.)
 
 Headed / debug (same flags as prod):
 

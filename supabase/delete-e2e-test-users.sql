@@ -1,8 +1,9 @@
 -- =================================================================
 -- Delete Playwright production E2E test users only
 --
--- Matches emails produced by tests/e2e-prod/wizard-new-user.spec.ts
--- (wh-e2e-u1-*@*, wh-e2e-u2-*@*, etc.). Cascades to public.profiles and
+-- Matches disposable E2E emails (e.g. tests/e2e-prod/03-signup-gate-cleanup.spec.ts:
+-- wh-e2e-signup-*@*). Bulk cleanup if per-test delete missed a row.
+-- Cascades to public.profiles and
 -- public.wedding_budgets via FK on delete cascade.
 --
 -- Run with Supabase CLI (after login + link) or Cursor MCP execute_sql; see

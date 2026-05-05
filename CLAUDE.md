@@ -11,8 +11,9 @@ Read these in order at session start (or when picking up unfamiliar work):
 1. [`PLAN.md`](./PLAN.md) — scope (Phase 1 only).
 2. [`RULES.md`](./RULES.md) — binding rules.
 3. [`AGENTS.md`](./AGENTS.md) — orientation, conventions, skills index.
-4. [`.cursor/rules/project-overview.mdc`](./.cursor/rules/project-overview.mdc) — package map + scripts.
-5. The remaining `.cursor/rules/*.mdc` files as relevant to the task (they have `globs:` frontmatter — match them to the files you're touching).
+4. **Skills** — for the task at hand, check [`.claude/skills/`](./.claude/skills/) for a matching `SKILL.md` and read it **before** implementing or writing runbooks (see **Skills** below and **Using skills** in [`AGENTS.md`](./AGENTS.md)). If the task surfaces bad or missing runbook content, plan updates per [`repo-skills-maintenance`](./.claude/skills/repo-skills-maintenance/SKILL.md).
+5. [`.cursor/rules/project-overview.mdc`](./.cursor/rules/project-overview.mdc) — package map + scripts.
+6. The remaining `.cursor/rules/*.mdc` files as relevant to the task (they have `globs:` frontmatter — match them to the files you're touching).
 
 ## Claude-specific working agreements
 
@@ -20,6 +21,7 @@ These extend (not replace) the Cursor rules.
 
 ### Before doing real work
 
+- **Find and use relevant skills:** Search [`.claude/skills/`](./.claude/skills/) for `SKILL.md` files that match the task (deploy, env, E2E, Supabase, Docker, budget wizard, CSS, vendors, Storybook, etc.). Read applicable skills **first** and follow them end-to-end instead of duplicating or contradicting them.
 - Use the **TodoList** tool for any multi-step task. Mark tasks `in_progress` before starting and `completed` only when fully done (lint + build pass for code work).
 - Use **AskUserQuestion** when a request is underspecified — don't guess scope. Especially: scope-stretch beyond `PLAN.md`, anything that touches the service-role key, anything that creates new server endpoints.
 - Spawn a **Plan** subagent for non-trivial design or audit passes; spawn an **Explore** subagent for "where is X" lookups across the repo. Don't burn the main thread on file-fishing.
@@ -47,6 +49,8 @@ These extend (not replace) the Cursor rules.
 If a request would expand `PLAN.md` (vendors, marketplace, admin cross-user reads, service-role server endpoints, new wedding types), **stop and ask**. Don't quietly grow the scope. If the user OKs it, update `PLAN.md` and `RULES.md` in the same PR.
 
 ## Skills
+
+**Always** prefer an existing skill over ad-hoc procedures: if the work touches topics listed below, open the linked `SKILL.md` and execute from it (aligned with **Using skills** in [`AGENTS.md`](./AGENTS.md)).
 
 All skills live under [`.claude/skills/`](./.claude/skills/) and are available as slash commands:
 

@@ -5,7 +5,7 @@ description: Remove Playwright production E2E accounts from Supabase (auth.users
 
 # Wedding Hall — clean up Playwright E2E test data
 
-Use after **`npm run test:e2e:prod`** against a shared Supabase project (e.g. production). Removes **only** accounts created by [`tests/e2e-prod/wizard-new-user.spec.ts`](../../../tests/e2e-prod/wizard-new-user.spec.ts), which register emails matching:
+Use after **`npm run test:e2e:prod`** against a shared Supabase project (e.g. production). Removes **only** disposable accounts whose emails match (signup tests use **`03-signup-gate-cleanup.spec.ts`**, which normally deletes its user after each run; this SQL is for leftovers):
 
 - `wh-e2e-%` (e.g. `wh-e2e-u1-123456789@test.example`)
 

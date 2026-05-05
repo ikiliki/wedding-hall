@@ -1,6 +1,16 @@
 # Production wizard E2E (Playwright)
 
-Tests live in [`wizard-new-user.spec.ts`](./wizard-new-user.spec.ts). Run against your deployed **client** URL (Vite app).
+Specs:
+
+| File | What it covers |
+|------|----------------|
+| [`01-wizard-new-user.spec.ts`](./01-wizard-new-user.spec.ts) | Wizard → auth gate → **sign in** (existing accounts) → resume |
+| [`02-admin-vendor-public.spec.ts`](./02-admin-vendor-public.spec.ts) | Admin creates vendor; couple sees it |
+| [`03-signup-gate-cleanup.spec.ts`](./03-signup-gate-cleanup.spec.ts) | **Sign up** new `wh-e2e-signup-*@example.com`, then **delete** that Auth user via Admin API |
+
+Run against your deployed **client** URL (Vite app).
+
+**Canonical production client:** `https://wedding-hall-gamma.vercel.app` — set `PLAYWRIGHT_BASE_URL` to this when testing **live Vercel** (see [wedding-hall-deploy](../../.claude/skills/wedding-hall-deploy/SKILL.md)). For local Docker, use [`wedding-hall-e2e-docker-flow`](../../.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md) instead of pointing prod config at `localhost`.
 
 ## Prerequisites
 
@@ -11,12 +21,22 @@ Tests live in [`wizard-new-user.spec.ts`](./wizard-new-user.spec.ts). Run agains
    | Variable | Required | Description |
    |----------|----------|-------------|
    | `PLAYWRIGHT_BASE_URL` | Yes | Client origin, e.g. `https://wedding-hall-gamma.vercel.app` |
-   | `E2E_USER1_EMAIL` | Yes | First test account email (must not already exist in prod Auth, or use a fresh alias) |
+   | `E2E_USER1_EMAIL` | Yes | Account that **already exists** in Supabase Auth for this project (wizard test **signs in**, it does not register) |
    | `E2E_USER1_PASSWORD` | Yes | Password (min 6 characters per app rules) |
-   | `E2E_USER2_EMAIL` | Yes | Second account — **must differ** from user 1 |
+   | `E2E_USER2_EMAIL` | Yes | Second account — **must differ** from user 1, also **pre-existing** in Auth |
    | `E2E_USER2_PASSWORD` | Yes | Password for user 2 |
 
-**Admin + vendor directory test** ([`admin-vendor-public.spec.ts`](./admin-vendor-public.spec.ts)) additionally needs:
+**Sign-up + cleanup** ([`03-signup-gate-cleanup.spec.ts`](./03-signup-gate-cleanup.spec.ts)) — runs only if all of these are set (in addition to `PLAYWRIGHT_BASE_URL`):
+
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_URL` | Same project the client uses (e.g. `https://YOUR_REF.supabase.co`; Docker: `http://localhost:54321`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Dashboard → API → **service_role** (never commit). Used only by `scripts/e2e-delete-auth-user.mjs` after the test. |
+| `E2E_SIGNUP_PASSWORD` | Optional — password for the disposable signup user (default `WhSignup1!`) |
+
+Manual delete helper: `npm run e2e:delete-auth-user -- user@example.com` with the same `SUPABASE_*` env vars.
+
+**Admin + vendor directory test** ([`02-admin-vendor-public.spec.ts`](./02-admin-vendor-public.spec.ts)) additionally needs:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -26,21 +46,18 @@ Tests live in [`wizard-new-user.spec.ts`](./wizard-new-user.spec.ts). Run agains
 
 Before first run, grant admin: `$env:E2E_ADMIN_EMAIL="..."; npm run e2e:grant-admin` — see [`.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md`](../../.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md).
 
-2. **Email confirmation (critical)**  
-   In Supabase Dashboard → Authentication → Providers → Email: if **Confirm email** is enabled, `signUp` often returns **no session** until the user clicks the magic link. The app then shows “check your email” and **does not** return to the wizard automatically. For this flow to pass unattended, either:
+2. **Email confirmation (critical for [`03-signup-gate-cleanup.spec.ts`](./03-signup-gate-cleanup.spec.ts) only)**  
+   In Supabase Dashboard → Authentication → Providers → Email: if **Confirm email** is enabled, `signUp` often returns **no session** until the user clicks the magic link — **`03` will fail**. For unattended runs: disable confirmation on the target project (staging) or use a project with **`GOTRUE_MAILER_AUTOCONFIRM=true`** (local Docker).
 
-   - Disable email confirmation on the project you test against (staging recommended), or  
-   - Complete verification manually / use an inbox automation (slow, flaky).
-
-3. **Two distinct users**  
-   You cannot register the same email twice. Use plus-addressing if your provider supports it (e.g. `test+pw1@example.com`, `test+pw2@example.com`).
+3. **Two distinct users (`01`)**  
+   `E2E_USER1_EMAIL` and `E2E_USER2_EMAIL` must be different accounts that already exist (create manually once, or use seeded Docker users — see [local-docker-stack](../../.claude/skills/local-docker-stack/SKILL.md)).
 
 ## Docker (local full stack)
 
 When production is not deployed, run the **same specs** against **`docker compose`** with a separate Playwright config:
 
 1. Bring the stack up (see [`.claude/skills/local-docker-stack/SKILL.md`](../../.claude/skills/local-docker-stack/SKILL.md)).
-2. Set env vars — defaults for admin are **`admin@weddinghall.app` / `Admin!2026`** from `supabase/seed.sql`; use **unique** `E2E_USER{1,2}_EMAIL` values per run for signup tests.
+2. Set env vars — for **`01`**, use seeded accounts such as **`test@gmail.com` / `test1234`** (see [local-docker-stack](../../.claude/skills/local-docker-stack/SKILL.md)). For **`03`**, add **`SUPABASE_URL`** + **`SUPABASE_SERVICE_ROLE_KEY`** (same JWT family as in `docker-compose.yml` for the `server` service). Admin defaults: **`admin@weddinghall.app` / `Admin!2026`**.
 3. **`npm run test:e2e:docker`** (not `test:e2e:prod`).
 
 Full steps: [`.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md`](../../.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md).
@@ -50,7 +67,7 @@ Full steps: [`.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md`](../../.clau
 From the repository root:
 
 ```bash
-set PLAYWRIGHT_BASE_URL=https://your-client.vercel.app
+set PLAYWRIGHT_BASE_URL=https://wedding-hall-gamma.vercel.app
 set E2E_USER1_EMAIL=test+pw1@yourdomain.com
 set E2E_USER1_PASSWORD=yourSecurePass1
 set E2E_USER2_EMAIL=test+pw2@yourdomain.com
@@ -61,7 +78,7 @@ npm run test:e2e:prod
 PowerShell:
 
 ```powershell
-$env:PLAYWRIGHT_BASE_URL="https://your-client.vercel.app"
+$env:PLAYWRIGHT_BASE_URL="https://wedding-hall-gamma.vercel.app"
 $env:E2E_USER1_EMAIL="test+pw1@yourdomain.com"
 # ...
 npm run test:e2e:prod
