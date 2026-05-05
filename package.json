@@ -20,6 +20,7 @@
     "test:e2e:docker": "playwright test --config=playwright.docker.config.ts",
     "test:e2e:docker:headed": "playwright test --config=playwright.docker.config.ts --headed",
     "test:e2e:docker:debug": "playwright test --config=playwright.docker.config.ts --debug",
+    "test:e2e:cleanup": "node --test tests/e2e-prod/cleanup/allowlist.test.mjs",
     "env:local": "node scripts/setup-env.mjs --local",
     "env:cloud": "node scripts/setup-env.mjs --from-supabase",
     "env:push-vercel": "node scripts/setup-env.mjs --push-vercel",

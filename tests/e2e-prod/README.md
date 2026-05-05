@@ -4,9 +4,9 @@ Specs:
 
 | File | What it covers |
 |------|----------------|
-| [`01-wizard-new-user.spec.ts`](./01-wizard-new-user.spec.ts) | Wizard → auth gate → **sign in** (existing accounts) → resume |
-| [`02-admin-vendor-public.spec.ts`](./02-admin-vendor-public.spec.ts) | Admin creates vendor; couple sees it |
-| [`03-signup-gate-cleanup.spec.ts`](./03-signup-gate-cleanup.spec.ts) | **Sign up** new `wh-e2e-signup-*@example.com`, then **delete** that Auth user via Admin API |
+| [`01-wizard-new-user.spec.ts`](./01-wizard-new-user.spec.ts) | Wizard → auth gate → fixture-seeded couple sign-in → resume |
+| [`02-admin-vendor-public.spec.ts`](./02-admin-vendor-public.spec.ts) | Fixture-seeded admin creates vendor; fixture-seeded couple sees it |
+| [`03-signup-gate-cleanup.spec.ts`](./03-signup-gate-cleanup.spec.ts) | Auth-gate sign-in flow using fixture-seeded disposable couple account |
 
 Run against your deployed **client** URL (Vite app).
 
@@ -21,43 +21,21 @@ Run against your deployed **client** URL (Vite app).
    | Variable | Required | Description |
    |----------|----------|-------------|
    | `PLAYWRIGHT_BASE_URL` | Yes | Client origin, e.g. `https://wedding-hall-gamma.vercel.app` |
-   | `E2E_USER1_EMAIL` | Yes | Account that **already exists** in Supabase Auth for this project (wizard test **signs in**, it does not register) |
-   | `E2E_USER1_PASSWORD` | Yes | Password (min 6 characters per app rules) |
-   | `E2E_USER2_EMAIL` | Yes | Second account — **must differ** from user 1, also **pre-existing** in Auth |
-   | `E2E_USER2_PASSWORD` | Yes | Password for user 2 |
+   | `SUPABASE_URL` | Yes | Same project the client uses (Docker: `http://localhost:54321`) |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Dashboard → API → **service_role** (never commit) |
+   | `E2E_RUN_ID` | No | Optional stable run id; auto-derived if missing |
 
-**Sign-up + cleanup** ([`03-signup-gate-cleanup.spec.ts`](./03-signup-gate-cleanup.spec.ts)) — runs only if all of these are set (in addition to `PLAYWRIGHT_BASE_URL`):
+All test users and vendors are now created per-test and cleaned in teardown with strict allowlist guards.
 
-| Variable | Description |
-|----------|-------------|
-| `SUPABASE_URL` | Same project the client uses (e.g. `https://YOUR_REF.supabase.co`; Docker: `http://localhost:54321`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Dashboard → API → **service_role** (never commit). Used only by `scripts/e2e-delete-auth-user.mjs` after the test. |
-| `E2E_SIGNUP_PASSWORD` | Optional — password for the disposable signup user (default `WhSignup1!`) |
-
-Manual delete helper: `npm run e2e:delete-auth-user -- user@example.com` with the same `SUPABASE_*` env vars.
-
-**Admin + vendor directory test** ([`02-admin-vendor-public.spec.ts`](./02-admin-vendor-public.spec.ts)) additionally needs:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `E2E_ADMIN_EMAIL` | For that spec | Existing Auth user you will grant `admin_users` |
-| `E2E_ADMIN_PASSWORD` | For that spec | Password for that admin |
-| `E2E_AUTO_GRANT_ADMIN` | Optional | Set to `1` to run `npm run e2e:grant-admin` from Playwright `beforeAll` (needs `supabase link`) |
-
-Before first run, grant admin: `$env:E2E_ADMIN_EMAIL="..."; npm run e2e:grant-admin` — see [`.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md`](../../.claude/skills/wedding-hall-e2e-admin-vendor-flow/SKILL.md).
-
-2. **Email confirmation (critical for [`03-signup-gate-cleanup.spec.ts`](./03-signup-gate-cleanup.spec.ts) only)**  
-   In Supabase Dashboard → Authentication → Providers → Email: if **Confirm email** is enabled, `signUp` often returns **no session** until the user clicks the magic link — **`03` will fail**. For unattended runs: disable confirmation on the target project (staging) or use a project with **`GOTRUE_MAILER_AUTOCONFIRM=true`** (local Docker).
-
-3. **Two distinct users (`01`)**  
-   `E2E_USER1_EMAIL` and `E2E_USER2_EMAIL` must be different accounts that already exist (create manually once, or use seeded Docker users — see [local-docker-stack](../../.claude/skills/local-docker-stack/SKILL.md)).
+2. **Cleanup unit tests (recommended gate)**  
+   Run `npm run test:e2e:cleanup` before E2E to verify email/vendor allowlist guards.
 
 ## Docker (local full stack)
 
 When production is not deployed, run the **same specs** against **`docker compose`** with a separate Playwright config:
 
 1. Bring the stack up (see [`.claude/skills/local-docker-stack/SKILL.md`](../../.claude/skills/local-docker-stack/SKILL.md)).
-2. Set env vars — for **`01`**, use seeded accounts such as **`test@gmail.com` / `test1234`** (see [local-docker-stack](../../.claude/skills/local-docker-stack/SKILL.md)). For **`03`**, add **`SUPABASE_URL`** + **`SUPABASE_SERVICE_ROLE_KEY`** (same JWT family as in `docker-compose.yml` for the `server` service). Admin defaults: **`admin@weddinghall.app` / `Admin!2026`**.
+2. Set env vars — `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are required for fixture seeding/cleanup (same JWT family as in `docker-compose.yml` for the `server` service).
 3. **`npm run test:e2e:docker`** (not `test:e2e:prod`).
 
 Full steps: [`.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md`](../../.claude/skills/wedding-hall-e2e-docker-flow/SKILL.md).
@@ -68,10 +46,8 @@ From the repository root:
 
 ```bash
 set PLAYWRIGHT_BASE_URL=https://wedding-hall-gamma.vercel.app
-set E2E_USER1_EMAIL=test+pw1@yourdomain.com
-set E2E_USER1_PASSWORD=yourSecurePass1
-set E2E_USER2_EMAIL=test+pw2@yourdomain.com
-set E2E_USER2_PASSWORD=yourSecurePass2
+set SUPABASE_URL=https://YOUR_REF.supabase.co
+set SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 npm run test:e2e:prod
 ```
 
@@ -79,8 +55,8 @@ PowerShell:
 
 ```powershell
 $env:PLAYWRIGHT_BASE_URL="https://wedding-hall-gamma.vercel.app"
-$env:E2E_USER1_EMAIL="test+pw1@yourdomain.com"
-# ...
+$env:SUPABASE_URL="https://YOUR_REF.supabase.co"
+$env:SUPABASE_SERVICE_ROLE_KEY="..."
 npm run test:e2e:prod
 ```
 
@@ -97,7 +73,7 @@ On Windows you can also set `set PWDEBUG=1` before `npm run test:e2e:prod` for a
 
 ## Clean up E2E data in Supabase
 
-After prod E2E, remove accounts matching `wh-e2e-%` via [`.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md`](../../.claude/skills/supabase-e2e-test-data-cleanup/SKILL.md) (MCP **`execute_sql`** or **`npm run supabase:cleanup-e2e-users`** after `supabase link`).
+Per-test cleanup and global teardown sweep remove `wh-e2e-*` users and `Playwright-E2E-*` vendors automatically.
 
 ## Screenshots
 

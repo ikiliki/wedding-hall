@@ -28,6 +28,7 @@ export default defineConfig({
     ["./tests/e2e-prod/reporters/github-issue-reporter.ts"],
   ],
   globalSetup: "./tests/e2e-prod/global-setup.ts",
+  globalTeardown: "./tests/e2e-prod/global-teardown.ts",
   outputDir: path.join("test-results", "e2e-prod-output"),
   use: {
     ...devices["Desktop Chrome"],
@@ -38,5 +39,13 @@ export default defineConfig({
     video: "off",
   },
   // Never auto-start a dev server for prod runs.
-  projects: [{ name: "chromium-prod", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "setup", testMatch: /fixtures\/auth\.setup\.ts/ },
+    {
+      name: "chromium-prod",
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"] },
+      testIgnore: /fixtures\/auth\.setup\.ts/,
+    },
+  ],
 });

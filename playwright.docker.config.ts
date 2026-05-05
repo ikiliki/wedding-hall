@@ -20,6 +20,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: "list",
+  globalSetup: "./tests/e2e-prod/global-setup.ts",
+  globalTeardown: "./tests/e2e-prod/global-teardown.ts",
   outputDir: path.join("test-results", "e2e-docker-output"),
   use: {
     ...devices["Desktop Chrome"],
@@ -29,5 +31,13 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "off",
   },
-  projects: [{ name: "chromium-docker", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "setup", testMatch: /fixtures\/auth\.setup\.ts/ },
+    {
+      name: "chromium-docker",
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"] },
+      testIgnore: /fixtures\/auth\.setup\.ts/,
+    },
+  ],
 });

@@ -17,7 +17,7 @@ It pairs with:
 ## What runs
 
 - Config: [`playwright.docker.config.ts`](../../../playwright.docker.config.ts) — defaults **`PLAYWRIGHT_BASE_URL=http://localhost:5173`**.
-- Tests: [`tests/e2e-prod/`](../../../tests/e2e-prod/) — order **`01`** → **`02`** → **`03`**. Wizard **`01`** signs **in** with existing users; **`03`** registers then deletes one **`wh-e2e-signup-*`** user.
+- Tests: [`tests/e2e-prod/`](../../../tests/e2e-prod/) — order **`01`** → **`02`** → **`03`**. All specs seed disposable users/vendors per test and clean them in teardown.
 - Playwright runs **on the host** (your machine) and drives the browser against **`http://localhost:5173`** — the **`client`** container. Nothing runs Playwright *inside* a container.
 
 ## One-time: stack up
@@ -47,16 +47,11 @@ Set these in your shell **before** `npm run test:e2e:docker` (Playwright does no
 | Variable | Docker recommendation |
 |----------|------------------------|
 | `PLAYWRIGHT_BASE_URL` | Omit to use default `http://localhost:5173`, or set explicitly |
-| `E2E_USER1_EMAIL` / `E2E_USER1_PASSWORD` | **Existing** Auth users — e.g. seeded **`test@gmail.com` / `test1234`** for `01` (see [local-docker-stack](../local-docker-stack/SKILL.md)) |
-| `E2E_USER2_EMAIL` / `E2E_USER2_PASSWORD` | Second **existing** account, different from user 1 |
-| `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` | **`admin@weddinghall.app` / `Admin!2026`** for `02` |
-| `SUPABASE_URL` | For **`03` only** — `http://localhost:54321` (host → gateway) |
-| `SUPABASE_SERVICE_ROLE_KEY` | For **`03` cleanup** — same service JWT as `studio` / `server` in [`docker-compose.yml`](../../../docker-compose.yml) |
-| `E2E_SIGNUP_PASSWORD` | Optional — `03` disposable signup (default `WhSignup1!`) |
+| `SUPABASE_URL` | Required — `http://localhost:54321` (host → gateway) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Required — same service JWT as `studio` / `server` in [`docker-compose.yml`](../../../docker-compose.yml) |
+| `E2E_RUN_ID` | Optional — stable run id for easier teardown log correlation |
 
-**Do not set `E2E_AUTO_GRANT_ADMIN=1` for Docker.** That flag shells out to **`supabase db query --linked`** (cloud project). Local Docker already has `admin_users` for `admin@weddinghall.app` from `seed.sql`.
-
-The **`server`** container must include **`SUPABASE_SERVICE_ROLE_KEY`** (well-known local JWT, matching `docker-compose.yml`) so **`POST /api/admin/vendors`** works — same as Vercel admin routes.
+The **`server`** container must include **`SUPABASE_SERVICE_ROLE_KEY`** (well-known local JWT, matching `docker-compose.yml`) so admin routes and cleanup primitives can work.
 
 ## Command
 
@@ -64,16 +59,9 @@ The **`server`** container must include **`SUPABASE_SERVICE_ROLE_KEY`** (well-kn
 $env:PLAYWRIGHT_BASE_URL="http://localhost:5173"
 $env:SUPABASE_URL="http://localhost:54321"
 $env:SUPABASE_SERVICE_ROLE_KEY="<paste service_role JWT from docker-compose.yml server/studio>"
-$env:E2E_ADMIN_EMAIL="admin@weddinghall.app"
-$env:E2E_ADMIN_PASSWORD="Admin!2026"
-$env:E2E_USER1_EMAIL="test@gmail.com"
-$env:E2E_USER1_PASSWORD="test1234"
-$env:E2E_USER2_EMAIL="second-user@example.com"
-$env:E2E_USER2_PASSWORD="SecurePass2!"
+$env:E2E_RUN_ID="local-docker"
 npm run test:e2e:docker
 ```
-
-(`E2E_USER2_*` must be a **second account you created once** in local Auth if `test@gmail.com` is the only seed — or create user 2 manually / skip **`03`** by omitting `SUPABASE_*` so only **`01`**+**`02`** run.)
 
 Headed / debug (same flags as prod):
 
@@ -98,6 +86,7 @@ Wizard tests **register new users**. Either:
 | Symptom | Check |
 |--------|--------|
 | Connection refused on `:5173` | `docker compose ps` — `client` up? |
+| Browser console CORS preflight error to `http://localhost:3001/api/*` (missing `Access-Control-Allow-Origin`) | Containers are often stale after env/code changes; run `docker compose up -d --build server client` before re-running Playwright |
 | `/api/budget` or admin **500** “not configured” | Server env; **`docker compose up -d server`** after compose edits |
 | Admin vendor **403/500** | **`SUPABASE_SERVICE_ROLE_KEY`** on `server` service; recreate container |
 | Duplicate email on signup | Pick new `E2E_USER*_EMAIL` values |
