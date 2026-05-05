@@ -26,7 +26,6 @@
     "env:push-vercel": "node scripts/setup-env.mjs --push-vercel",
     "supabase:cleanup-e2e-users": "npx supabase db query --linked --agent=no -f supabase/delete-e2e-test-users.sql",
     "e2e:grant-admin": "node scripts/e2e-grant-admin.mjs",
-    "e2e:delete-auth-user": "node scripts/e2e-delete-auth-user.mjs",
     "supabase:migrate-drop-is-admin": "npx supabase db query --linked --agent=no -f supabase/migrations/20260505120000_drop_profiles_is_admin.sql"
   },
   "devDependencies": {
