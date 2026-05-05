@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import {
   Navigate,
   Route,
@@ -10,7 +10,6 @@ import {
 import { ApiError, fetchBudget } from "@/shared/lib/api";
 import { getCategory, type CategoryId } from "@wedding-hall/shared";
 import {
-  hasWizardDraftProgress,
   resumeWizardStep,
   wizardStateFromBudget,
 } from "@/features/budget-wizard/lib/wizard-state-from-budget";
@@ -108,15 +107,11 @@ export function StepRenderer() {
 // to whatever step makes sense.
 export function HydrateAndStart() {
   const navigate = useNavigate();
-  const { state, hydrateFromBudget } = useWizard();
+  const { hydrateFromBudget } = useWizard();
   const { session, loading } = useWizardSession();
-  const stateRef = useRef(state);
-  stateRef.current = state;
 
   useEffect(() => {
     if (loading) return;
-
-    const localSnapshot = stateRef.current;
     let cancelled = false;
 
     (async () => {
@@ -130,31 +125,19 @@ export function HydrateAndStart() {
             navigate(urlFor(resume), { replace: true });
             return;
           }
-          if (!hasWizardDraftProgress(localSnapshot)) {
-            navigate("/start/couple", { replace: true });
-            return;
-          }
-          navigate(urlFor(resumeWizardStep(localSnapshot)), { replace: true });
+          navigate("/start/couple", { replace: true });
           return;
         } catch (err) {
           if (cancelled) return;
           if (!(err instanceof ApiError && err.kind === "unauthorized")) {
             console.error("HydrateAndStart fetchBudget", err);
           }
-          if (!hasWizardDraftProgress(localSnapshot)) {
-            navigate("/start/couple", { replace: true });
-            return;
-          }
-          navigate(urlFor(resumeWizardStep(localSnapshot)), { replace: true });
+          navigate("/start/couple", { replace: true });
           return;
         }
       }
 
-      if (!hasWizardDraftProgress(localSnapshot)) {
-        navigate("/start/couple", { replace: true });
-        return;
-      }
-      navigate(urlFor(resumeWizardStep(localSnapshot)), { replace: true });
+      navigate("/start/couple", { replace: true });
     })();
 
     return () => {

@@ -2,13 +2,13 @@
 // Owns:
 //   - Couple identity, date bucket, guest range, wedding type
 //   - Per-category selections (catalog-driven)
-//   - localStorage persistence so a refresh mid-flow doesn't lose progress
+//   - In-memory draft state while navigating wizard steps
 //   - Server save (PUT /api/budget) at the post-hall gate and on completion
 //
 // All types + the context object itself live in `./wizard-types.ts` so
 // React Refresh can hot-reload this provider cleanly.
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import type {
   CategoryId,
   CategorySelection,
@@ -29,8 +29,6 @@ import {
   type WizardSubtype,
 } from "./wizard-types";
 
-const STORAGE_KEY = "wh.wizard.v1";
-
 const EMPTY: WizardState = {
   coupleName1: "",
   coupleName2: "",
@@ -43,18 +41,6 @@ const EMPTY: WizardState = {
   actuals: {},
   celebrationDate: "",
 };
-
-function loadFromStorage(): WizardState {
-  if (typeof window === "undefined") return EMPTY;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return EMPTY;
-    const parsed = JSON.parse(raw);
-    return { ...EMPTY, ...parsed };
-  } catch {
-    return EMPTY;
-  }
-}
 
 export type WizardProviderProps = {
   children: ReactNode;
@@ -70,19 +56,9 @@ export function WizardProvider({
   children,
   initialPostLoginBudgetDraftSaveRequested = false,
 }: WizardProviderProps) {
-  const [state, setState] = useState<WizardState>(() => loadFromStorage());
+  const [state, setState] = useState<WizardState>(EMPTY);
   const [postLoginBudgetDraftSaveRequested, setPostLoginBudgetDraftSaveRequested] =
     useState(() => initialPostLoginBudgetDraftSaveRequested);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // Storage might be full or disabled (private mode). Ignore — the
-      // server save still works; the user just loses crash recovery.
-    }
-  }, [state]);
 
   let guestMid = 0;
   if (typeof state.guestMin === "number" && typeof state.guestMax === "number") {
@@ -155,9 +131,6 @@ export function WizardProvider({
   const reset = useCallback(() => {
     setState(EMPTY);
     setPostLoginBudgetDraftSaveRequested(false);
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
   }, []);
 
   const saveServer = useCallback(async (opts?: SaveServerOptions) => {
