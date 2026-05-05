@@ -20,12 +20,12 @@
     "test:e2e:docker": "playwright test --config=playwright.docker.config.ts",
     "test:e2e:docker:headed": "playwright test --config=playwright.docker.config.ts --headed",
     "test:e2e:docker:debug": "playwright test --config=playwright.docker.config.ts --debug",
+    "test:e2e:cleanup": "node --test tests/e2e-prod/cleanup/allowlist.test.mjs",
     "env:local": "node scripts/setup-env.mjs --local",
     "env:cloud": "node scripts/setup-env.mjs --from-supabase",
     "env:push-vercel": "node scripts/setup-env.mjs --push-vercel",
     "supabase:cleanup-e2e-users": "npx supabase db query --linked --agent=no -f supabase/delete-e2e-test-users.sql",
     "e2e:grant-admin": "node scripts/e2e-grant-admin.mjs",
-    "e2e:delete-auth-user": "node scripts/e2e-delete-auth-user.mjs",
     "supabase:migrate-drop-is-admin": "npx supabase db query --linked --agent=no -f supabase/migrations/20260505120000_drop_profiles_is_admin.sql"
   },
   "devDependencies": {

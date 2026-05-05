@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { expect, test, type Page, type TestInfo } from "@playwright/test";
+import { test, expect, type TestInfo } from "./fixtures";
+import type { Page } from "@playwright/test";
 import { fillWizardThroughVenue } from "./helpers/wizard-through-venue";
 import { attachResponseLogger } from "./helpers/response-logger";
 
@@ -9,24 +10,6 @@ const SCREENSHOT_DIR = path.join(
   "test-results",
   "e2e-prod-screenshots",
 );
-
-function requireEnv(name: string): string {
-  const v = process.env[name];
-  if (!v) {
-    throw new Error(`Missing required env ${name}`);
-  }
-  return v;
-}
-
-function shouldRun(): boolean {
-  return Boolean(
-    process.env.PLAYWRIGHT_BASE_URL &&
-      process.env.E2E_USER1_EMAIL &&
-      process.env.E2E_USER1_PASSWORD &&
-      process.env.E2E_USER2_EMAIL &&
-      process.env.E2E_USER2_PASSWORD,
-  );
-}
 
 function attachBrowserErrorListeners(page: Page): string[] {
   const errors: string[] = [];
@@ -77,15 +60,10 @@ async function screenshotChrome(
 }
 
 test.describe("production wizard (auth gate — existing users sign in)", () => {
-  test.beforeEach(({ }, testInfo) => {
-    testInfo.skip(
-      !shouldRun(),
-      "Set PLAYWRIGHT_BASE_URL, E2E_USER1_EMAIL, E2E_USER1_PASSWORD, E2E_USER2_EMAIL, E2E_USER2_PASSWORD",
-    );
-  });
-
   test("user 1: draft through venue → gate → sign in → resume questionnaire", async ({
     page,
+    couple,
+    loginAs,
   }, testInfo) => {
     const browserErrors = attachBrowserErrorListeners(page);
     const flushNetworkErrors = attachResponseLogger(page, testInfo);
@@ -109,29 +87,9 @@ test.describe("production wizard (auth gate — existing users sign in)", () => 
         "Login page with returnTo (user 1)",
       );
 
-      await page.getByRole("tab", { name: /כניסה למערכת/ }).click();
-      await page.locator("#email").fill(requireEnv("E2E_USER1_EMAIL"));
-      await page.locator("#password").fill(requireEnv("E2E_USER1_PASSWORD"));
-
-      const putBudget = page.waitForResponse(
-        (r) =>
-          r.request().method() === "PUT" &&
-          r.url().includes("/api/budget") &&
-          r.ok(),
-        { timeout: 120_000 },
-      );
-
-      await page.getByRole("button", { name: /התחברות/ }).click();
+      await loginAs(page, couple);
 
       await expect(page).toHaveURL(/\/start\/food-upgrade/, { timeout: 120_000 });
-
-      await putBudget;
-
-      const raw = await page.evaluate(() =>
-        localStorage.getItem("wh.wizard.v1"),
-      );
-      expect(raw).toBeTruthy();
-      expect(raw).toContain("E2E אחד");
 
       await screenshotChrome(
         page,
@@ -150,6 +108,8 @@ test.describe("production wizard (auth gate — existing users sign in)", () => 
 
   test("user 2: isolated context — same flow, second account", async ({
     browser,
+    couple,
+    loginAs,
   }, testInfo) => {
     const context = await browser.newContext({
       locale: "he-IL",
@@ -170,29 +130,9 @@ test.describe("production wizard (auth gate — existing users sign in)", () => 
       await expect(page).toHaveURL(/\/login\?/);
 
       await screenshotChrome(page, "user2-login", "Login page (user 2)");
-
-      await page.getByRole("tab", { name: /כניסה למערכת/ }).click();
-      await page.locator("#email").fill(requireEnv("E2E_USER2_EMAIL"));
-      await page.locator("#password").fill(requireEnv("E2E_USER2_PASSWORD"));
-
-      const putBudget = page.waitForResponse(
-        (r) =>
-          r.request().method() === "PUT" &&
-          r.url().includes("/api/budget") &&
-          r.ok(),
-        { timeout: 120_000 },
-      );
-
-      await page.getByRole("button", { name: /התחברות/ }).click();
+      await loginAs(page, couple);
 
       await expect(page).toHaveURL(/\/start\/food-upgrade/, { timeout: 120_000 });
-
-      await putBudget;
-
-      const raw = await page.evaluate(() =>
-        localStorage.getItem("wh.wizard.v1"),
-      );
-      expect(raw).toContain("E2E שני");
 
       await screenshotChrome(
         page,
