@@ -58,6 +58,16 @@ test.describe("admin adds vendor → couple sees it on dashboard", () => {
 
       await adminPage.goto("/admin/vendors/new");
       await adminPage.locator("#vf-name").waitFor({ state: "visible", timeout: 30_000 });
+
+      // Empty-categories diagnostic: if the data is missing, fail fast with a
+      // pointer to the seed migration instead of timing out further down.
+      const empty = adminPage.locator("#vf-empty-categories");
+      if (await empty.isVisible().catch(() => false)) {
+        throw new Error(
+          "vendor_categories is empty in this project — apply supabase/migrations/20260505140000_reseed_vendor_categories.sql.",
+        );
+      }
+
       await adminPage.locator("#vf-name").fill(vendorName);
 
       const cat = adminPage.locator("#vf-category");

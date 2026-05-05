@@ -90,7 +90,18 @@ function VendorFormContent({ mode }: Props) {
       {loading && <p className={styles.statusMsg}>טוען…</p>}
       {error && <p className={styles.statusMsg} style={{ color: "red" }}>{error}</p>}
 
-      {!loading && !error && categories.length > 0 && (
+      {!loading && !error && categories.length === 0 && (
+        <p
+          id="vf-empty-categories"
+          className={styles.statusMsg}
+          style={{ color: "#b45309" }}
+        >
+          אין קטגוריות ספקים מוגדרות. יש להריץ את הסקיפט/מיגרציה לזריעת{" "}
+          <code>public.vendor_categories</code> לפני יצירת ספק.
+        </p>
+      )}
+
+      {!loading && !error && (
         <div className={styles.card}>
           <VendorForm
             categories={categories}
