@@ -107,90 +107,6 @@ export function WizardLayout({
   return (
     <main className={styles.root}>
       <div className={styles.inner}>
-        <header
-          className={
-            guestChrome
-              ? "wh-wizard-stitch-header wh-wizard-stitch-header--guest"
-              : "wh-wizard-stitch-header"
-          }
-        >
-          <div className="wh-wizard-stitch-header-start">
-            <Link
-              to="/"
-              className="wh-wizard-stitch-header-brand"
-              aria-label="דף הבית"
-            >
-              Wedding Hall
-            </Link>
-            {!guestChrome && (
-            <nav
-              className="wh-wizard-stitch-header-mid wh-wizard-stitch-nav-toolbar"
-              aria-label="ניווט ראשי"
-            >
-              <Link to="/dashboard" className="wh-wizard-stitch-nav-link">
-                בית
-              </Link>
-              <span className="wh-wizard-stitch-nav-dot" aria-hidden />
-              <Link to="/budget" className="wh-wizard-stitch-nav-link">
-                תקציב
-              </Link>
-              <span className="wh-wizard-stitch-nav-dot" aria-hidden />
-              <span
-                className="wh-wizard-stitch-nav-link wh-wizard-stitch-nav-link--soon"
-                aria-disabled
-              >
-                ספקים
-              </span>
-              <span className="wh-wizard-stitch-nav-dot" aria-hidden />
-              <span
-                className="wh-wizard-stitch-nav-link wh-wizard-stitch-nav-link--soon"
-                aria-disabled
-              >
-                אתר
-              </span>
-            </nav>
-            )}
-          </div>
-
-          {guestChrome ? (
-            <Link
-              to={signInHref}
-              className="wh-wizard-stitch-guest-signin"
-            >
-              <span className="material-symbols-outlined" aria-hidden>
-                login
-              </span>
-              <span>התחברות</span>
-            </Link>
-          ) : (
-          <div className="wh-wizard-stitch-header-actions">
-            <button
-              type="button"
-              className="wh-wizard-stitch-icon-btn"
-              aria-label="התראות"
-            >
-              <span className="material-symbols-outlined" aria-hidden>
-                notifications
-              </span>
-            </button>
-            <button
-              type="button"
-              className="wh-wizard-stitch-icon-btn"
-              aria-label="הגדרות"
-            >
-              <span className="material-symbols-outlined" aria-hidden>
-                settings
-              </span>
-            </button>
-            <span
-              className="wh-wizard-stitch-avatar"
-              aria-hidden
-              title="פרופיל"
-            />
-          </div>
-          )}
-        </header>
-
         <div className="wh-wizard-stitch-progress">
           <div className="wh-wizard-stitch-progress-labels">
             <span className="wh-wizard-stitch-progress-step">
@@ -266,7 +182,24 @@ export function WizardLayout({
 
       <footer className="wh-wizard-stitch-footer-bar">
         <div className="wh-wizard-stitch-footer-inner">
-          <div className="wh-wizard-stitch-footer-row">{footer}</div>
+          <div className="wh-wizard-stitch-footer-row">
+            <div className="wh-wizard-stitch-footer-primary">{footer}</div>
+            {guestChrome ? (
+              <Link to={signInHref} className="wh-wizard-footer-home-link">
+                <span className="material-symbols-outlined" aria-hidden>
+                  login
+                </span>
+                <span>התחברות</span>
+              </Link>
+            ) : (
+              <Link to="/dashboard" className="wh-wizard-footer-home-link">
+                <span className="material-symbols-outlined" aria-hidden>
+                  home
+                </span>
+                <span>בית</span>
+              </Link>
+            )}
+          </div>
         </div>
       </footer>
 
