@@ -2,7 +2,7 @@
 
 Monorepo for a minimal black-and-white wedding-budget **MVP**: a **React (Vite)** client, a **Next.js** data-gateway server, **Supabase** (Auth + Postgres) and deploys on **Vercel**.
 
-> Scope: [`PLAN.md`](./PLAN.md). Rules: [`RULES.md`](./RULES.md). Agent context: [`AGENTS.md`](./AGENTS.md).
+> Scope: [`PLAN.md`](./PLAN.md). Rules: [`RULES.md`](./RULES.md). Agent context: [`AGENTS.md`](./AGENTS.md) (Brain consumer — see **Brain** there and [`.cursor/rules/brain.mdc`](./.cursor/rules/brain.mdc)).
 
 ## Architecture at a glance
 
