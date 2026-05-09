@@ -1,0 +1,16 @@
+---
+description: brain — portable skill system contract for this project
+alwaysApply: true
+---
+
+This project is managed by **brain** at `/workspace/brain`.
+
+On every turn:
+
+1. Read `/workspace/brain/rule.md` — the always-on contract.
+2. Read `/workspace/brain/context.md` — current idea state.
+3. Read `/workspace/brain/AGENTS.md` — skill + agent catalog.
+4. Pick the right skill or agent and open its file. Cross-reference IDs (`D-GH-1`, `C-VITE-1`, etc.) are paths into `/workspace/brain/worlds/…/SKILL.md`.
+5. Log every event per `D-LOG-1 logging-protocol`: prefer `POST http://localhost:5180/log` on the **host**, or `POST http://brain-sidecar:5180/log` from **inside** Brain Docker Compose; fallback: direct write at `/workspace/brain/logs/<idea_slug>/events.jsonl`.
+
+Do not invent steps a skill already documents. Do not commit, push, deploy, or call provider APIs without explicit user authorization. Do not skip logging.

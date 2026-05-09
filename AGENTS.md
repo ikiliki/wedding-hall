@@ -2,6 +2,20 @@
 
 Read this first (human or agent). Cursor also loads [`.cursor/rules/`](./.cursor/rules/).
 
+## Brain (mandatory)
+
+This repo is a **brain consumer**. The Cursor rule [`.cursor/rules/brain.mdc`](./.cursor/rules/brain.mdc) is always on. On **every** turn, agents must:
+
+1. Read **`<brain-root>/rule.md`** — global contract (`/workspace/brain` in Brain Docker Compose; elsewhere use your brain clone path and update `.cursor/rules/brain.mdc` if it differs).
+2. Read **`<brain-root>/context.md`** — active idea (`idea_slug`, targets). While this repo is the focus, set `idea_slug` to **`wedding-hall`** so timeline logs append to **`logs/wedding-hall/events.jsonl`** (not another project).
+3. Read **`<brain-root>/AGENTS.md`** — brain skill/agent catalog and IDs (`D-LOG-1`, `D-GH-2`, `C-VITE-1`, …). Open **`worlds/.../SKILL.md`** files from that catalog instead of improvising ops steps.
+4. **Logging (`D-LOG-1`):** Prefer `POST http://localhost:5180/log` on the host, or `POST http://brain-sidecar:5180/log` inside Brain Compose; fallback: append JSON lines to `<brain-root>/logs/<idea_slug>/events.jsonl`. Do not skip logging.
+5. **Two skill layers:** Brain skills are cross-repo procedures; **this repo’s** runbooks live under [`.claude/skills/`](./.claude/skills/). For wedding-hall–specific workflows (budget wizard, E2E, Vercel env bootstrap, vendor admin), read the repo skill first; use brain IDs when the user or a skill references them.
+
+**Stack note:** Brain’s default docs assume **Express** for the server stack. Wedding Hall uses **Next.js 15** as the data gateway — follow [`RULES.md`](./RULES.md), [`PLAN.md`](./PLAN.md), and repo skills for server routing and gateways.
+
+Do not commit, push, deploy, or call provider APIs without explicit user authorization ([`RULES.md`](./RULES.md)).
+
 ## What this is
 
 **Wedding Hall** — wedding-budget app in a **monorepo**:

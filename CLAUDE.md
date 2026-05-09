@@ -2,18 +2,23 @@
 
 Working notes for Claude (Cowork mode / Claude Code) on this repo. **Read [`AGENTS.md`](./AGENTS.md) first** — it's still the agent orientation doc and is shared with Cursor.
 
+## Brain contract
+
+Aligned with [`.cursor/rules/brain.mdc`](./.cursor/rules/brain.mdc): resolve **brain root** (default `/workspace/brain` in Brain Docker), then load **`rule.md`**, **`context.md`**, and brain **`AGENTS.md`** before deep work; follow **`D-LOG-1`** logging; open brain **`worlds/.../SKILL.md`** when an ID applies. Repo-specific runbooks remain under **`.claude/skills/`** (see **Skills** below). When Wedding Hall is the active effort, **`context.md.idea_slug`** should be **`wedding-hall`** so audit logs land in **`logs/wedding-hall/events.jsonl`**.
+
 ## Source of truth
 
 The Cursor rules in [`.cursor/rules/`](./.cursor/rules/) are **binding for Claude too**. No duplication. When a Cursor rule and this file disagree, the Cursor rule wins.
 
 Read these in order at session start (or when picking up unfamiliar work):
 
-1. [`PLAN.md`](./PLAN.md) — scope (Phase 1 only).
-2. [`RULES.md`](./RULES.md) — binding rules.
-3. [`AGENTS.md`](./AGENTS.md) — orientation, conventions, skills index.
-4. **Skills** — for the task at hand, check [`.claude/skills/`](./.claude/skills/) for a matching `SKILL.md` and read it **before** implementing or writing runbooks (see **Skills** below and **Using skills** in [`AGENTS.md`](./AGENTS.md)). If the task surfaces bad or missing runbook content, plan updates per [`repo-skills-maintenance`](./.claude/skills/repo-skills-maintenance/SKILL.md).
-5. [`.cursor/rules/project-overview.mdc`](./.cursor/rules/project-overview.mdc) — package map + scripts.
-6. The remaining `.cursor/rules/*.mdc` files as relevant to the task (they have `globs:` frontmatter — match them to the files you're touching).
+1. Brain **`rule.md`**, **`context.md`**, and **`AGENTS.md`** (see [.cursor/rules/brain.mdc](.cursor/rules/brain.mdc)).
+2. [`PLAN.md`](./PLAN.md) — scope (Phase 1 only).
+3. [`RULES.md`](./RULES.md) — binding rules.
+4. [`AGENTS.md`](./AGENTS.md) — orientation, conventions, Brain plus repo skills index.
+5. **Skills** — for the task at hand, check [`.claude/skills/`](./.claude/skills/) for a matching `SKILL.md` and read it **before** implementing or writing runbooks (see **Skills** below and **Using skills** in [`AGENTS.md`](./AGENTS.md)). If the task surfaces bad or missing runbook content, plan updates per [`repo-skills-maintenance`](./.claude/skills/repo-skills-maintenance/SKILL.md).
+6. [`.cursor/rules/project-overview.mdc`](./.cursor/rules/project-overview.mdc) — package map + scripts.
+7. The remaining `.cursor/rules/*.mdc` files as relevant to the task (they have `globs:` frontmatter — match them to the files you're touching).
 
 ## Claude-specific working agreements
 
@@ -51,6 +56,8 @@ If a request would expand `PLAN.md` (vendors, marketplace, admin cross-user read
 ## Skills
 
 **Always** prefer an existing skill over ad-hoc procedures: if the work touches topics listed below, open the linked `SKILL.md` and execute from it (aligned with **Using skills** in [`AGENTS.md`](./AGENTS.md)).
+
+**Brain catalog:** ID-based procedures (`D-LOG-1`, `D-GH-2`, `C-VITE-1`, …) are indexed in **`<brain-root>/AGENTS.md`** and implemented under **`worlds/.../SKILL.md`** in the same brain checkout (see **Brain contract** above).
 
 All skills live under [`.claude/skills/`](./.claude/skills/) and are available as slash commands:
 
